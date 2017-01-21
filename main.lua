@@ -1,37 +1,57 @@
  require "levels"
  require "player"
+ require "camera"
 
 local window_width, window_height = love.graphics.getDimensions()
-local pixels_per_meter = 64
-local world = love.physics.newWorld( 0, 0, true )
-love.physics.setMeter(pixels_per_meter)
+local world, world_scale = createPhysicsWorld()
+love.physics.setMeter(world_scale)
 
 local objects = {}
-local player = createPlayer( world, window_width/2, window_height/2 )
+player:init( world )
+local draw_world = true
 
 function love.load()
-	createLevel1( world, objects )
+	createLevel1( objects )
 end
 
 function love.update( dt )
-	updatePlayer()
+	player:update(dt)
 
 	world:update(dt)
 end
 
 function love.draw()
-	love.graphics.setColor( 0, 100, 100 )
-	love.graphics.print("HELLO GGJ2017", 200, 200)
+	camera:set()
+	camera:trackPlayer(player, window_width, window_height)
 
-	drawPhysicsBox( objects.floor )
+	if draw_world then
+		love.graphics.setBackgroundColor( 150, 150, 150 )
+	else
+		love.graphics.setBackgroundColor( 0, 0, 0 )
+	end
+
+	love.graphics.setLineWidth( 5 )
+	player:draw_pulses()
+
+	love.graphics.setColor( 0, 0, 0 )
+	drawPhysicsBox( objects.wall_left )
+	drawPhysicsBox( objects.wall_bottom )
 	drawPhysicsBox( objects.box1 )
 	drawPhysicsBox( objects.box2 )
 	drawPhysicsBall( objects.ball1 )
-	drawPlayer()
+
+	player:draw()
+
+	camera:unset()
 end
 
 function love.keypressed( keycode, scancode, isrepeat )
 	if scancode == "space" then
 		player.pulsing = true
+
+		player:pulse()
+
+	elseif scancode == "return" then
+		draw_world = not draw_world
 	end
 end

@@ -1,4 +1,26 @@
-function createPhysicsBox( world, x, y, w, h, density, restitution, type )
+local world_scale
+local world
+
+function createPhysicsWorld()
+	world_scale = 10
+	world = love.physics.newWorld( 0, 0, true )
+
+	return world, world_scale
+end
+
+function createPhysicsWall( x, y, w, h )
+	wall = {}
+	wall.w = w
+	wall.h = h
+	wall.body = love.physics.newBody( world, x, y, "static" )
+	wall.shape = love.physics.newRectangleShape( wall.w, wall.h )
+	wall.fixture = love.physics.newFixture( wall.body, wall.shape, 0 )
+	wall.fixture:setRestitution(0)
+
+	return wall
+end
+
+function createPhysicsBox( x, y, w, h, density, restitution, type )
 	box = {}
 	box.w = w
 	box.h = h
@@ -12,10 +34,10 @@ end
 
 -- Does not handle rotation!
 function drawPhysicsBox( box )
-	love.graphics.rectangle("line", box.body:getX() - box.w/2, box.body:getY() - box.h/2, box.w, box.h )
+	love.graphics.rectangle("fill", box.body:getX() - box.w/2, box.body:getY() - box.h/2, box.w, box.h )
 end
 
-function createPhysicsBall( world, x, y, radius, density, restitution, type )
+function createPhysicsBall( x, y, radius, density, restitution, type )
 	ball = {}
 	ball.radius = radius
 	ball.body = love.physics.newBody( world, x, y, type )
@@ -27,5 +49,5 @@ function createPhysicsBall( world, x, y, radius, density, restitution, type )
 end
 
 function drawPhysicsBall( ball )
-	love.graphics.circle("line", ball.body:getX(), ball.body:getY(), ball.radius )
+	love.graphics.circle("fill", ball.body:getX(), ball.body:getY(), ball.radius )
 end
