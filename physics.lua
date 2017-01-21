@@ -68,33 +68,32 @@ function drawPhysicsBall( ball )
 	love.graphics.circle("fill", ball.body:getX(), ball.body:getY(), ball.radius )
 end
 
+local zed = {}
+
 function beginContact( a, b, contact )
 	if (a:getUserData().tag == "lava" and b:getUserData().tag == "player") or
-	   (a:getUserData().tag == "player" and b:getUserData().tag == "lava") then
+	   (a:getUserData().tag == "player" and b:getUserData().tag == "lava") or
+	   (a:getUserData().tag == "zombie" and b:getUserData().tag == "player") or
+	   (a:getUserData().tag == "player" and b:getUserData().tag == "zombie") then
 		-- Player touched lava
 		player:die()
+
+	elseif (a:getUserData().tag == "lava" and b:getUserData().tag == "zombie") then
+		-- lava is in the zombie
+		b:getUserData().this:die()
+	elseif (b:getUserData().tag == "zombie" and a:getUserData().tag == "lava") then
+		-- The zombie is in lava
+		b:getUserData().this:die()
+
 	elseif (a:getUserData().tag == "zombie" and b:getUserData().tag == "pulse") then
-
-		a:getUserData().this:charge(
-			b:getUserData().this.id,
-			b:getUserData().this.x, b:getUserData().this.y,
-			b:getUserData().this.lifetime - b:getUserData().this.age + 0.1 )
-
+		  	zombie_charge( a:getUserData().this, b:getUserData().this )
 	elseif (a:getUserData().tag == "pulse" and b:getUserData().tag == "zombie") then
-	    
-		b:getUserData().this:charge(
-			a:getUserData().this.id,
-			a:getUserData().this.x, a:getUserData().this.y,
-			a:getUserData().this.lifetime - a:getUserData().this.age )
+	    	zombie_charge( b:getUserData().this, a:getUserData().this )
 	end
 end
 
 function endContact( a, b, contact )
-	if (a:getUserData().tag == "zombie" and b:getUserData().tag == "pulse") then
-		--print('gone')
-	elseif (a:getUserData().tag == "pulse" and b:getUserData().tag == "zombie") then
-		--print('gone')	    
-	end
+
 end
 
 function preSolve( a, b, contact )
@@ -103,4 +102,8 @@ end
 
 function postSolve( a, b, contact, normalImpulse, tangentImpulse )
 	-- body
+end
+
+function zombie_charge( zed, pulse )
+	zed:charge(pulse.id, pulse.x, pulse.y, pulse.lifetime - pulse.age)
 end

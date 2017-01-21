@@ -58,17 +58,19 @@ function player:update(dt)
 	local x_vel = 0
 	local y_vel = 0
 
-	if love.keyboard.isScancodeDown("right") then
-		x_vel = x_vel + vel
-	end
-	if love.keyboard.isScancodeDown("left") then
-		x_vel = x_vel - vel
-	end
-	if love.keyboard.isScancodeDown("up") then
-		y_vel = y_vel - vel
-	end
-	if love.keyboard.isScancodeDown("down") then
-		y_vel = y_vel + vel
+	if not self.dead then
+		if love.keyboard.isScancodeDown("right") then
+			x_vel = x_vel + vel
+		end
+		if love.keyboard.isScancodeDown("left") then
+			x_vel = x_vel - vel
+		end
+		if love.keyboard.isScancodeDown("up") then
+			y_vel = y_vel - vel
+		end
+		if love.keyboard.isScancodeDown("down") then
+			y_vel = y_vel + vel
+		end
 	end
 
 	self.body:setLinearVelocity( x_vel, y_vel )
@@ -91,7 +93,7 @@ function player:update(dt)
 	local step_speed = 1/2
 
 	-- Create footsteps when you walk
-	if love.keyboard.isScancodeDown("left", "right", "up", "down") then
+	if love.keyboard.isScancodeDown("left", "right", "up", "down") and not self.dead then
 		self.step_timer = self.step_timer + dt
 	else
 		self.step_timer = step_speed
@@ -122,7 +124,6 @@ function player:update(dt)
 	for i,v in ipairs(self.pulse_array) do
 		if v then
 			self.pulse_array[i]:update(dt)
-
 		end
 	end
 
@@ -140,7 +141,6 @@ end
 
 function player:die()
 	self.dead = true
-	print("player dies")
 end
 
 function player:pulse()

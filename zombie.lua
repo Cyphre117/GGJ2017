@@ -1,4 +1,5 @@
 require "physics"
+require "player"
 
 Zombie = {}
 Zombie.prototype = {
@@ -8,8 +9,12 @@ Zombie.prototype = {
 	radius = 15,
 	left_walk_sounds = {},
 	right_walk_sounds = {},
-	sonar_sounds = {}
+	sonar_sounds = {},
+	death_sounds = {},
+	dead = false
 }
+
+local zombie_pulse_array = {}
 
 function Zombie:new(world, x, y)
 	-- Create new empty object
@@ -30,7 +35,7 @@ function Zombie:new(world, x, y)
 	o.left_foot = true
 	o.step_timer = 0
 	o.charging = false
-	o.move_timer = 0
+	o.move_timer = 1
 
 	-- left foot
 	table.insert(o.left_walk_sounds, love.audio.newSource("audio/Footsteps/Left_Foot_Zombie_Walk_01.wav", "static"))
@@ -48,6 +53,17 @@ function Zombie:new(world, x, y)
 
 	-- zombie 'sonar' sounds
 	table.insert(o.sonar_sounds, love.audio.newSource("audio/Sonar/Sonar_Zombie_01.wav", "static"))
+	table.insert(o.sonar_sounds, love.audio.newSource("audio/Sonar/Sonar_Zombie_02.wav", "static"))
+	table.insert(o.sonar_sounds, love.audio.newSource("audio/Sonar/Sonar_Zombie_03.wav", "static"))
+
+	-- zombie DEATH soudns
+	table.insert(o.death_sounds, love.audio.newSource("audio/DEATH/Zombie_Death_01.wav", "static"))
+	table.insert(o.death_sounds, love.audio.newSource("audio/DEATH/Zombie_Death_02.wav", "static"))
+	table.insert(o.death_sounds, love.audio.newSource("audio/DEATH/Zombie_Death_03.wav", "static"))
+
+	for i = 1, #o.death_sounds do
+		o.death_sounds[i]:setVolumeLimits(0.6, 1)
+	end
 
 	return o
 end
@@ -80,6 +96,20 @@ function Zombie:update( dt )
 		self.step_timer = step_speed
 	end
 
+	-- update all pulses
+	for i,v in ipairs(zombie_pulse_array) do
+		if v then
+			zombie_pulse_array[i].lifetime = zombie_pulse_array[i].lifetime - dt
+		end
+	end
+
+	-- remove pulses that are dead
+	for i = 1, #zombie_pulse_array do
+		if zombie_pulse_array[i] ~= nil and zombie_pulse_array[i].lifetime < 0 then
+			table.remove( zombie_pulse_array, i )
+		end
+	end
+
 	-- Reduce the move timer, affects charging and normal random movement
 	self.move_timer = self.move_timer - dt
 
@@ -104,11 +134,25 @@ function Zombie:update( dt )
 
 			self.move_timer = love.math.random() * 5
 
-			print('shuffle')
-
 			-- Play a random sonar sound
+			local id = love.math.random(#self.sonar_sounds)
+			self.sonar_sounds[id]:stop()
+			self.sonar_sounds[id]:setPosition(self.body:getX(), self.body:getY(), 0)
+			self.sonar_sounds[id]:play()
+
+			-- Add a pulse, going to use a different kind this time
+			table.insert( zombie_pulse_array, {lifetime = 3, x = self.body:getX(), y = self.body:getY()} )
 		end
 	end
+end
+
+function Zombie:die()
+	-- Play random death sound
+	local id = love.math.random(#self.death_sounds)
+	self.death_sounds[id]:stop()
+	self.death_sounds[id]:setPosition(self.body:getX(), self.body:getY(), 0)
+	self.death_sounds[id]:play()
+	self.dead = true
 end
 
 function Zombie:charge(id, x, y, time)
@@ -131,4 +175,14 @@ end
 
 function Zombie:draw()
 	love.graphics.circle("fill", self.body:getX(), self.body:getY(), self.radius)
+end
+
+function draw_zombie_pulses()
+	for i=1,#zombie_pulse_array do
+		love.graphics.setColor(200, 0, 0, (zombie_pulse_array[i].lifetime/3) * 255 )
+		love.graphics.circle("fill",
+			zombie_pulse_array[i].x,
+			zombie_pulse_array[i].y,
+			(3 - zombie_pulse_array[i].lifetime) * 10 + 10 )
+	end
 end
