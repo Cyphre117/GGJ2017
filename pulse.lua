@@ -29,8 +29,6 @@ function Pulse:new(world, x, y, lifetime, velocity, r, g, b)
 	o.fixture:setSensor( true )
 	o.fixture:setUserData( "pulse" )
 
-	print("new pulse")
-
 	return o
 end
 

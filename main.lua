@@ -2,6 +2,7 @@
  require "player"
  require "camera"
  require "lava"
+ require "zombie"
 
 local window_width, window_height = love.graphics.getDimensions()
 Physics:init()
@@ -11,6 +12,7 @@ player:init( Physics.world )
 local draw_world = true
 
 lava1 = Lava:new(Physics.world, 200, 200, 50, 90)
+zombie1 = Zombie:new(Physics.world, 400, 400)
 
 function love.load()
 	love.window.setTitle("Sounds in a Dark Room")
@@ -51,6 +53,7 @@ function love.draw()
 	drawPhysicsBall( objects.ball1 )
 
 	--- Zombies
+	zombie1:draw()
 
 	--- Player
 	player:draw()

@@ -1,7 +1,7 @@
 Zombie = {}
-Zombie.prototype = {}
+Zombie.prototype = {radius = 20}
 
-function Zombie:new(x, y)
+function Zombie:new(world, x, y)
 	-- Create new empty object
 	local o = {}
 	-- Set the meta table
@@ -12,10 +12,12 @@ function Zombie:new(x, y)
 		o[k] = v
 	end
 
-	o.body = love.physics.newBody( world, x, y, "kinematic" )
-	o.shape = love.physics.newCircleShape( 0 )
+	o.body = love.physics.newBody( world, x, y, "dynamic" )
+	o.shape = love.physics.newCircleShape( o.radius )
 	o.fixture = love.physics.newFixture( o.body, o.shape )
 	o.fixture:setUserData( "zombie" )
+
+	return o
 end
 
 function Zombie:update( dt )
@@ -23,5 +25,6 @@ function Zombie:update( dt )
 end
 
 function Zombie:draw()
-
+	love.graphics.setColor( 0, 200, 0, 255 )
+	love.graphics.circle("fill", self.body:getX(), self.body:getY(), self.radius)
 end
