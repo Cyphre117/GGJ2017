@@ -8,7 +8,7 @@ function Pulse:new(x, y, lifetime, velocity, r, g, b)
 	setmetatable(o, self)
 	self.__index = self
 	-- Copy in default member variables
-	for k,v in pairs(Pulse.prototype) do
+	for k,v in pairs(self.prototype) do
 		o[k] = v
 	end
 
@@ -30,7 +30,6 @@ function Pulse:update(dt)
 		self.age = self.age + dt
 		if self.age > self.lifetime then
 			self.dead = true
-			print('died')
 		end
 	end
 end

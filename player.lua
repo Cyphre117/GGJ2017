@@ -1,7 +1,6 @@
 require "pulse"
 
-player = {}
-player.radius = 20
+player = {dead = false, radius = 10}
 player.pulse_array = {}
 
 function player:init( world )
@@ -9,6 +8,7 @@ function player:init( world )
 	self.shape = love.physics.newCircleShape( self.radius )
 	self.fixture = love.physics.newFixture( self.body, self.shape, 1 )
 	self.fixture:setRestitution(0)
+	self.fixture:setUserData("player")
 end
 
 function player:x()
@@ -53,19 +53,24 @@ function player:update(dt)
 			table.remove( self.pulse_array, i )
 		end
 	end
+end
 
-	-- local p = 1
-	-- while p <= #self.pulse_array do
-	-- 	if self.pulse_array[p].dead then
-	-- 		table.remove( self.pulse_array[p] )
-	-- 	else
-	-- 		p = p + 1
-	-- 	end
-	-- end
+function player:respawn()
+	self.dead = false
+end
+
+function player:die()
+	self.dead = true
+	print("player dies")
+end
+
+function player:pulse()
+	table.insert( self.pulse_array, Pulse:new(player:x(), player:y(), 2, 10, 0, 0, 255) )
 end
 
 function player:draw()
-	love.graphics.circle("line", self:x(), self:y(), self.radius )
+	love.graphics.setColor(0, 0, 0, 255)
+	love.graphics.circle("fill", self:x(), self:y(), self.radius )
 end
 
 function player:draw_pulses()
@@ -73,9 +78,4 @@ function player:draw_pulses()
 	for i,v in ipairs(self.pulse_array) do
 		self.pulse_array[i]:draw()
 	end
-end
-
-function player:pulse()
-	table.insert( self.pulse_array, Pulse:new(player:x(), player:y(), 2, 10, 0, 0, 255) )
-	print( #self.pulse_array )
 end
