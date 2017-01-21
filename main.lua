@@ -1,28 +1,35 @@
  require "levels"
- require "player"
  require "camera"
  require "lava"
  require "zombie"
 
 local window_width, window_height = love.graphics.getDimensions()
 Physics:init()
-
-local objects = {}
 player:init( Physics.world )
+--love.audio.setDistanceModel("linear")
+
+local walls = {}
+local lavas = {}
+local zombies = {}
 local draw_world = true
 
-lava1 = Lava:new(Physics.world, 200, 200, 50, 90)
-zombie1 = Zombie:new(Physics.world, 400, 400)
+walls, lavas, zombies = createLevelFromImage('images/level1.png')
 
 function love.load()
 	love.window.setTitle("Sounds in a Dark Room")
-	createLevel1( objects )
+
+	zombies[1].moving = true
 end
 
 function love.update( dt )
 	player:update(dt)
 
 	Physics:update(dt)
+
+	-- Zombies
+	for i=1, #zombies do
+		zombies[i]:update(dt)
+	end
 end
 
 function love.draw()
@@ -38,7 +45,9 @@ function love.draw()
 		love.graphics.setBackgroundColor( 0, 0, 0 )
 	end
 	--- Lava first
-	lava1:draw()
+	for i=1, #lavas do
+		lavas[i]:draw()
+	end
 
 	--- Pulses
 	love.graphics.setLineWidth( 5 )
@@ -46,14 +55,20 @@ function love.draw()
 
 	--- Walls
 	love.graphics.setColor( 0, 0, 0 )
-	drawPhysicsBox( objects.wall_left )
-	drawPhysicsBox( objects.wall_bottom )
-	drawPhysicsBox( objects.box1 )
-	drawPhysicsBox( objects.box2 )
-	drawPhysicsBall( objects.ball1 )
+	for i=1, #walls do
+		drawPhysicsBox( walls[i] )
+	end
 
 	--- Zombies
-	zombie1:draw()
+	if draw_world then
+		love.graphics.setColor( 0, 200, 0, 255 )
+	else
+		love.graphics.setColor( 0, 0, 0, 255 )
+	end
+	
+	for i=1, #zombies do
+		zombies[i]:draw()
+	end
 
 	--- Player
 	player:draw()

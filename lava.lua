@@ -1,5 +1,5 @@
 Lava = {}
-Lava.prototype = {}
+Lava.prototype = {margin = 10}
 
 function Lava:new(world, x, y, width, height)
 	-- Create new empty object
@@ -21,12 +21,12 @@ function Lava:new(world, x, y, width, height)
 	o.shape = love.physics.newRectangleShape( o.w, o.h )
 	o.fixture = love.physics.newFixture( o.body, o.shape )
 	o.fixture:setSensor( true )
-	o.fixture:setUserData("lava")
+	o.fixture:setUserData({tag="lava"})
 
 	return o
 end
 
 function Lava:draw()
 	love.graphics.setColor(200, 0, 0, 255)
-	love.graphics.rectangle("fill", self.body:getX() - self.w/2, self.body:getY() - self.h/2, self.w, self.h)
+	love.graphics.rectangle("fill", self.body:getX() - self.w/2 - self.margin, self.body:getY() - self.h/2 - self.margin, self.w + (self.margin*2), self.h + (self.margin*2))
 end

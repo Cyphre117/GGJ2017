@@ -27,13 +27,11 @@ function Pulse:new(world, x, y, lifetime, velocity, r, g, b)
 	o.shape = love.physics.newCircleShape( 0 )
 	o.fixture = love.physics.newFixture( o.body, o.shape )
 	o.fixture:setSensor( true )
-	o.fixture:setUserData( "pulse" )
+	o.fixture:setUserData( {tag="pulse", this=o} )
+	-- Use the creation time as a uniquie identifier for the pulse
+	o.id = love.timer.getTime()
 
 	return o
-end
-
-function Pulse:delete(world)
-
 end
 
 function Pulse:update(dt)
@@ -50,13 +48,15 @@ function Pulse:update(dt)
 			self.fixture:destroy()
 			self.fixture = love.physics.newFixture( self.body, self.shape )
 			self.fixture:setSensor( true )
-			self.fixture:setUserData( "pulse" )
+			self.fixture:setUserData( {tag="pulse", this=self} )
 		end
 	end
 end
 
 function Pulse:draw()
 	if self.dead == false then
+		love.graphics.setColor( self.r, self.g, self.b, 200 - ((self.age / self.lifetime)*255) )
+		love.graphics.circle("fill", self.x, self.y, self.age * self.velocity * 10)
 		love.graphics.setColor( self.r, self.g, self.b, 255 - ((self.age / self.lifetime)*255) )
 		love.graphics.circle("line", self.x, self.y, self.age * self.velocity * 10)
 	end

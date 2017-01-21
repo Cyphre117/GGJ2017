@@ -16,9 +16,9 @@ function camera:unset()
 	love.graphics.pop()
 end
 
-	function camera:trackPlayer(player, width, height)
-	self.x = player.body:getX() - width/2 or self.x
-	self.y = player.body:getY() - height/2 or self.y
+function camera:trackPlayer(player, width, height)
+	self.x = player:x() - width/2 or self.x
+	self.y = player:y() - height/2 or self.y
 end
 
 function camera:move(dx, dy)

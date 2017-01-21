@@ -1,13 +1,48 @@
 require "physics"
+require "player"
 
 local window_width, window_height = love.graphics.getDimensions()
 
-function createLevel1( objects_list )
-	-- put some boundaries around the level
-	objects_list.wall_left = Physics:addWall( 10, window_height/2, 20, window_height )
-	objects_list.wall_bottom = Physics:addWall( window_width/2, window_height - 10, window_width, 20 )
+function createLevel1()
+	t = {}
 
-	objects_list.box1 = Physics:addBox( 100, 160, 30, 30, 1, 0.3, "dynamic" )
-	objects_list.box2 = Physics:addBox( 120, 120, 30, 30, 1, 0.3, "dynamic" )
-	objects_list.ball1 = Physics:addBall( 130, 50, 30, 1, 0.3, "dynamic" )
+	-- put some boundaries around the level
+	table.insert( t, Physics:addWall( 10, window_height/2, 20, window_height ) )
+	table.insert( t, Physics:addWall( window_width/2, window_height - 10, window_width, 20 ) )
+	--table.insert( t, Physics:addWall( ) )
+
+	return t
+end
+
+function createLevelFromImage(path)
+	local scale = 50
+
+	walls = {}
+	lavas = {}
+	zombies = {}
+
+	level = love.image.newImageData(path)
+	for y = 0, level:getHeight()-1 do
+		for x = 0, level:getWidth()-1 do
+			local r, g, b, a = level:getPixel(x, y)
+			if r == 0 and g == 0 and b == 0 then
+				io.write('W')
+				table.insert( walls, Physics:addWall( x * scale, y * scale, scale, scale) )
+			elseif r == 255 and g == 0 and b == 0 then
+				io.write('L')
+				table.insert( lavas, Lava:new(Physics.world, x * scale, y * scale, scale, scale) )
+			elseif g == 255 and r == 0 and b == 0 then
+				io.write('Z')
+				table.insert( zombies, Zombie:new(Physics.world, x * scale, y * scale) )
+			elseif r == 0 and g == 0 and b == 255 then
+				io.write('P')
+				player:setPosition(x * scale, y * scale)
+			else
+				io.write(' ')
+			end
+		end
+		io.write('\n')
+	end
+
+	return walls, lavas, zombies
 end

@@ -3,7 +3,7 @@ Physics.scale = 10
 
 function Physics:init()
 	-- Initialise the box2d world
-	self.world = love.physics.newWorld( 0, 0, true )
+	self.world = love.physics.newWorld( 0, 0, false )
 	-- set the world scale
 	love.physics.setMeter(self.scale)
 	-- set callbacks
@@ -29,6 +29,7 @@ function Physics:addWall( x, y, w, h )
 	wall.shape = love.physics.newRectangleShape( wall.w, wall.h )
 	wall.fixture = love.physics.newFixture( wall.body, wall.shape, 0 )
 	wall.fixture:setRestitution(0)
+	wall.fixture:setUserData({tag="wall"})
 
 	return wall
 end
@@ -68,19 +69,32 @@ function drawPhysicsBall( ball )
 end
 
 function beginContact( a, b, contact )
-	if (a:getUserData() == "lava" and b:getUserData() == "player") or
-	   (a:getUserData() == "player" and b:getUserData() == "lava") then
+	if (a:getUserData().tag == "lava" and b:getUserData().tag == "player") or
+	   (a:getUserData().tag == "player" and b:getUserData().tag == "lava") then
 		-- Player touched lava
 		player:die()
-	elseif (a:getUserData() == "zombie" and b:getUserData() == "pulse") or
-	       (a:getUserData() == "pulse" and b:getUserData() == "zombie") then
-	    -- zombie touched pulse
-	    print("zombie heard something")
+	elseif (a:getUserData().tag == "zombie" and b:getUserData().tag == "pulse") then
+
+		a:getUserData().this:charge(
+			b:getUserData().this.id,
+			b:getUserData().this.x, b:getUserData().this.y,
+			b:getUserData().this.lifetime - b:getUserData().this.age + 0.1 )
+
+	elseif (a:getUserData().tag == "pulse" and b:getUserData().tag == "zombie") then
+	    
+		b:getUserData().this:charge(
+			a:getUserData().this.id,
+			a:getUserData().this.x, a:getUserData().this.y,
+			a:getUserData().this.lifetime - a:getUserData().this.age )
 	end
 end
 
 function endContact( a, b, contact )
-	-- body
+	if (a:getUserData().tag == "zombie" and b:getUserData().tag == "pulse") then
+		--print('gone')
+	elseif (a:getUserData().tag == "pulse" and b:getUserData().tag == "zombie") then
+		--print('gone')	    
+	end
 end
 
 function preSolve( a, b, contact )
