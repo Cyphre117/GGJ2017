@@ -70,10 +70,12 @@ end
 function beginContact( a, b, contact )
 	if (a:getUserData() == "lava" and b:getUserData() == "player") or
 	   (a:getUserData() == "player" and b:getUserData() == "lava") then
+		-- Player touched lava
 		player:die()
-	elseif (a:getUserData() == "player" and b:getUserData() == "pulse") or
-	       (a:getUserData() == "pulse" and b:getUserData() == "player") then
-	    print("glug")
+	elseif (a:getUserData() == "zombie" and b:getUserData() == "pulse") or
+	       (a:getUserData() == "pulse" and b:getUserData() == "zombie") then
+	    -- zombie touched pulse
+	    print("zombie heard something")
 	end
 end
 

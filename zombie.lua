@@ -11,6 +11,11 @@ function Zombie:new(x, y)
 	for k,v in pairs(self.prototype) do
 		o[k] = v
 	end
+
+	o.body = love.physics.newBody( world, x, y, "kinematic" )
+	o.shape = love.physics.newCircleShape( 0 )
+	o.fixture = love.physics.newFixture( o.body, o.shape )
+	o.fixture:setUserData( "zombie" )
 end
 
 function Zombie:update( dt )

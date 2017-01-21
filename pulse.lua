@@ -23,7 +23,7 @@ function Pulse:new(world, x, y, lifetime, velocity, r, g, b)
 	o.dead = false
 
 	-- Each pulse is itself a sensor
-	o.body = love.physics.newBody( world, x, y, "kinematic" )
+	o.body = love.physics.newBody( world, x, y, "static" )
 	o.shape = love.physics.newCircleShape( 0 )
 	o.fixture = love.physics.newFixture( o.body, o.shape )
 	o.fixture:setSensor( true )
