@@ -71,7 +71,9 @@ end
 
 -- Does not handle rotation!
 function drawPhysicsBox( box )
-	love.graphics.rectangle("fill", box.body:getX() - box.w/2, box.body:getY() - box.h/2, box.w, box.h )
+	--love.graphics.rectangle("fill", box.body:getX() - box.w/2, box.body:getY() - box.h/2, box.w, box.h )
+	love.graphics.polygon("fill",box.body:getWorldPoints(box.shape:getPoints()))
+
 end
 
 function Physics:addBall( x, y, radius, density, restitution, type )
@@ -101,10 +103,12 @@ function drawPhysicsBall( ball )
 end
 
 function beginContact( a, b, contact )
-	if a:getUserData() == "lava" and b:getUserData() == "player" then
+	if (a:getUserData() == "lava" and b:getUserData() == "player") or
+	   (a:getUserData() == "player" and b:getUserData() == "lava") then
 		player:die()
-	elseif a:getUserData() == "player" and b:getUserData() == "lava"  then
-		player:die()
+	elseif (a:getUserData() == "player" and b:getUserData() == "pulse") or
+	       (a:getUserData() == "pulse" and b:getUserData() == "player") then
+	    print("glug")
 	end
 end
 

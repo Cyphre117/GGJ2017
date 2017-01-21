@@ -28,5 +28,5 @@ end
 
 function Lava:draw()
 	love.graphics.setColor(200, 0, 0, 255)
-	love.graphics.rectangle("fill", self.body:getX() - self.w/2, self.body:getY() - self.h-2, self.w, self.h)
+	love.graphics.rectangle("fill", self.body:getX() - self.w/2, self.body:getY() - self.h/2, self.w, self.h)
 end

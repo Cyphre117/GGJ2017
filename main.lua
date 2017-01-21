@@ -61,7 +61,7 @@ end
 
 function love.keypressed( keycode, scancode, isrepeat )
 	if scancode == "space" then
-		player:pulse()
+		player:pulse(Physics.world)
 
 	elseif scancode == "return" then
 		draw_world = not draw_world

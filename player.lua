@@ -64,8 +64,8 @@ function player:die()
 	print("player dies")
 end
 
-function player:pulse()
-	table.insert( self.pulse_array, Pulse:new(player:x(), player:y(), 2, 10, 0, 0, 255) )
+function player:pulse(world)
+	table.insert( self.pulse_array, Pulse:new(world, player:x(), player:y(), 2, 10, 0, 0, 255) )
 end
 
 function player:draw()
