@@ -245,28 +245,4 @@ function love.keypressed( keycode, scancode, isrepeat )
 			restart()
 		end
 	end
-
--- move to option in main menu
-	-- if keycode == "1" then
-	-- 	clear_level()
-	-- 	current_level = 'images/level1.png'
-	-- 	walls, lavas, zombies, bounds, level_start_time = createLevelFromImage(current_level)
-	-- elseif keycode == "2" then
-	-- 	clear_level()
-	-- 	current_level = 'images/level2.png'
-	-- 	walls, lavas, zombies, bounds, level_start_time = createLevelFromImage(current_level)
-	-- elseif keycode == "3" then
-	-- 	clear_level()
-	-- 	current_level = 'images/level3.png'
-	-- 	walls, lavas, zombies, bounds, level_start_time = createLevelFromImage(current_level)
-	-- elseif keycode == "4" then
-	-- 	clear_level()
-	-- 	current_level = 'images/level4.png'
-	-- 	walls, lavas, zombies, bounds, level_start_time = createLevelFromImage(current_level)
-	-- elseif keycode == "5" then
-	-- 	clear_level()
-	-- 	current_level = 'images/level5.png'
-	-- 	walls, lavas, zombies, bounds, level_start_time = createLevelFromImage(current_level)
-	-- end
-
 end
