@@ -223,6 +223,8 @@ function Player:die(killer)
 			self.lava_death_sound:setPosition(player:x(), player:y(), 0)
 			self.lava_death_sound:play()
 		end
+
+		self.pulse_array = {}
 	end
 end
 

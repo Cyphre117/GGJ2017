@@ -7,6 +7,7 @@ Zombie.prototype = {
 	target_diry = 0,
 	target_id = 0,
 	radius = 15,
+	pulse_array = {},
 	left_walk_sounds = {},
 	right_walk_sounds = {},
 	alert_sounds = {},
@@ -15,7 +16,7 @@ Zombie.prototype = {
 	dead = false
 }
 
-local zombie_pulse_array = {}
+--local zombie_pulse_array = {}
 
 function Zombie:new(world, x, y)
 	-- Create new empty object
@@ -89,7 +90,7 @@ function Zombie:update( dt )
 		if self.step_timer > self.step_speed then
 			self.step_timer = 0
 
-			table.insert( zombie_pulse_array,
+			table.insert( self.pulse_array,
 				{lifetime = 1.5,
 				x = self.body:getX(),
 				y = self.body:getY(),
@@ -115,16 +116,16 @@ function Zombie:update( dt )
 	end
 
 	-- update all pulses
-	for i,v in ipairs(zombie_pulse_array) do
+	for i,v in ipairs(self.pulse_array) do
 		if v then
-			zombie_pulse_array[i].lifetime = zombie_pulse_array[i].lifetime - dt
+			self.pulse_array[i].lifetime = self.pulse_array[i].lifetime - dt
 		end
 	end
 
 	-- remove pulses that are dead
-	for i = 1, #zombie_pulse_array do
-		if zombie_pulse_array[i] ~= nil and zombie_pulse_array[i].lifetime < 0 then
-			table.remove( zombie_pulse_array, i )
+	for i = 1, #self.pulse_array do
+		if self.pulse_array[i] ~= nil and self.pulse_array[i].lifetime < 0 then
+			table.remove( self.pulse_array, i )
 		end
 	end
 
@@ -167,7 +168,7 @@ function Zombie:update( dt )
 				self.sonar_sounds[id]:play()
 
 				-- Add a pulse, going to use a different kind this time
-				table.insert( zombie_pulse_array, {lifetime = 3, x = self.body:getX(), y = self.body:getY(), velocity=10} )
+				table.insert( self.pulse_array, {lifetime = 3, x = self.body:getX(), y = self.body:getY(), velocity=10} )
 			end
 		end
 	end
@@ -182,6 +183,7 @@ function Zombie:die()
 		self.death_sounds[id]:play()
 		self.dead = true
 		self.body:destroy()
+
 	end
 end
 
@@ -212,12 +214,17 @@ function Zombie:draw()
 	end
 end
 
-function draw_zombie_pulses()
-	for i=1,#zombie_pulse_array do
-		love.graphics.setColor(200, 0, 0, (zombie_pulse_array[i].lifetime/3) * 255 )
+function Zombie:draw_pulses()
+	for i=1,#self.pulse_array do
+		love.graphics.setColor(200, 0, 0, (self.pulse_array[i].lifetime/3) * 200 )
 		love.graphics.circle("fill",
-			zombie_pulse_array[i].x,
-			zombie_pulse_array[i].y,
-			(1.5 - zombie_pulse_array[i].lifetime) * zombie_pulse_array[i].velocity + 10 )
+			self.pulse_array[i].x,
+			self.pulse_array[i].y,
+			(1.5 - self.pulse_array[i].lifetime) * self.pulse_array[i].velocity + 6 )
+		love.graphics.setColor(200, 0, 0, (self.pulse_array[i].lifetime/3) * 255 )
+		love.graphics.circle("line",
+			self.pulse_array[i].x,
+			self.pulse_array[i].y,
+			(1.5 - self.pulse_array[i].lifetime) * self.pulse_array[i].velocity + 6 )
 	end
 end

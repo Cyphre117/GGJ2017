@@ -98,15 +98,13 @@ function love.draw()
 	love.graphics.rectangle("fill", bounds.minx, bounds.maxy, (bounds.maxx - bounds.minx), 1000)
 
 	--- Zombies
-	draw_zombie_pulses()
-
-	if draw_world then
-		love.graphics.setColor( 0, 200, 0, 255 )
-	else
-		love.graphics.setColor( 0, 0, 0, 255 )
+	for i=1, #zombies do
+		love.graphics.setLineWidth(2)
+		zombies[i]:draw_pulses()
 	end
 
 	for i=1, #zombies do
+		love.graphics.setColor(0, 0, 0, 255)
 		zombies[i]:draw()
 	end
 
@@ -138,7 +136,14 @@ function love.draw()
 		if pause_menu_list[pause_menu_item] == "levels" then
 			love.graphics.print("You can even create your own levels!\nJust add '.png' files to the levels folder\n\n100% RED = lava\n100% GREEN = zombies\n100% BLUE = player\n100% BLACK = walls", 20, 300, 0, 2, 2)
 		elseif pause_menu_list[pause_menu_item] == "controls" then
-			love.graphics.print("ARROWS: move\nSPACE: sonar\nR: restart\n\nZombies run towards noise\nLava kills everything", 20, 300, 0, 2, 2)
+			love.graphics.print(
+[[ARROWS: move
+SPACE: sonar
+R: restart
+
+Zombies run towards noise
+Lava kills everything]]
+, 20, 300, 0, 2, 2)
 			if gamepad_found then
 				love.graphics.print("Gamepad detected", 20, window_height - 50, 0, 2, 2)
 			end
@@ -152,8 +157,8 @@ linkedin.com/in/christopher-quinn-sound
 
 More levels by Bogdan, Sam A. and Sam C.
 
-And thanks to Dundee Makerspace for the awesome jam site!
-]], 20, 300, 0, 1.5, 1.5)
+And thanks to Dundee Makerspace for the awesome jam site!]]
+, 20, 300, 0, 1.5, 1.5)
 		end
 	end
 
