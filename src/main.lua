@@ -24,11 +24,9 @@ pause_menu_list = {"restart", "levels", "controls", "credits"}
 pause_menu_item = 1
 
 function love.load()
-	love.window.setTitle("Sounds in a Dark Room")
-
 	level_list = get_level_list()
 
-	level_filepath = "images/"..level_list[level_index]
+	level_filepath = "levels/"..level_list[level_index]
 
 	restart()
 end
@@ -125,11 +123,21 @@ function love.draw()
 		end
 
 		if pause_menu_list[pause_menu_item] == "levels" then
-			love.graphics.print("You can even create your own levels!\nJust add images to the images folder\n\n100% RED = lava\n100% GREEN = zombies\n100% BLUE = player\n100% BLACK = walls", 20, 300, 0, 2, 2)
+			love.graphics.print("You can even create your own levels!\nJust add '.png' files to the levels folder\n\n100% RED = lava\n100% GREEN = zombies\n100% BLUE = player\n100% BLACK = walls", 20, 300, 0, 2, 2)
 		elseif pause_menu_list[pause_menu_item] == "controls" then
 			love.graphics.print("ARROWS: move\nSPACE: sonar\nR: restart\n\nZombies run towards noise\nLava kills everything", 20, 300, 0, 2, 2)
 		elseif pause_menu_list[pause_menu_item] == "credits" then
-			love.graphics.print("SOME CREDITS GO HERE", 20, 300, 0, 2, 2)
+			love.graphics.print(
+[[Concept/Programming: Tom
+@HopeThomasj
+
+Audio: Chris
+linkedin.com/in/christopher-quinn-sound
+
+More levels by Bogdan, Sam A. and Sam C.
+
+And thanks to Dundee Makerspacefor the awesome jam site!
+]], 20, 300, 0, 1.5, 1.5)
 		end
 	end
 
@@ -171,7 +179,7 @@ function GetFileExtension(url)
 end
 
 function get_level_list()
-	local items = love.filesystem.getDirectoryItems("images/")
+	local items = love.filesystem.getDirectoryItems("levels/")
 	local png_files = {}
 
 	for i = 1, #items do
@@ -212,14 +220,14 @@ function love.keypressed( keycode, scancode, isrepeat )
 			-- change selected level
 			level_index = level_index + 1
 			if level_index > #level_list then level_index = 1 end
-			level_filepath = "images/"..level_list[level_index]
+			level_filepath = "levels/"..level_list[level_index]
 
 		elseif scancode == "left" and pause_menu_list[pause_menu_item] == "levels" then
 
 			-- change selected level
 			level_index = level_index - 1
 			if level_index < 1 then level_index = #level_list end
-			level_filepath = "images/"..level_list[level_index]
+			level_filepath = "levels/"..level_list[level_index]
 
 		end
 	end
