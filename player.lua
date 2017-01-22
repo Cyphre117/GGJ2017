@@ -14,9 +14,13 @@ function player:init( world )
 	self.fixture = love.physics.newFixture( self.body, self.shape, 1 )
 	self.fixture:setRestitution(0)
 	self.fixture:setUserData({tag="player"})
-	self.world = world
-	self.left_foot = true
-	self.death_text = ""
+	self.world = world	  -- the physics world
+	self.left_foot = true -- which foot is about to step
+	self.step_speed = 1/2 -- steps sounds
+	self.death_text = ""  -- texed displayed when you die
+
+	-- Set orientation to looking up
+	love.audio.setOrientation(0, 1, 0, 0, 0, 1)
 
 	-- load zombie death text
 	for line in love.filesystem.lines("text/dead_by_zombie.txt") do
@@ -65,13 +69,16 @@ function player:y()
 	return self.body:getY()
 end
 
-function player:update(dt)
+function player:update_input(dt)
+end
+
+function player:update(dt, paused)
 
 	local vel = 100
 	local x_vel = 0
 	local y_vel = 0
 
-	if not self.dead then
+	if self.dead == false and paused == false then
 		if love.keyboard.isScancodeDown("right") then
 			x_vel = x_vel + vel
 		end
@@ -84,6 +91,13 @@ function player:update(dt)
 		if love.keyboard.isScancodeDown("down") then
 			y_vel = y_vel + vel
 		end
+
+		-- Create footsteps when you walk
+		if love.keyboard.isScancodeDown("left", "right", "up", "down") then
+			self.step_timer = self.step_timer + dt
+		else
+			self.step_timer = self.step_speed
+		end
 	end
 
 	self.body:setLinearVelocity( x_vel, y_vel )
@@ -93,7 +107,6 @@ function player:update(dt)
 	-- if x_vel ~= 0 or y_vel ~= 0 then
 	-- 	love.audio.setOrientation(x_vel, math.abs(-y_vel), 0, 0, 0, 1)
 	-- else
-		love.audio.setOrientation(0, 1, 0, 0, 0, 1)
 	-- end
 
 	-- Pulses are continously set the location of the listener
@@ -102,17 +115,8 @@ function player:update(dt)
 		self.pulse_sounds[i]:setPosition(player:x(), player:y(), 0)
 	end
 
-	-- steps per second
-	local step_speed = 1/2
-
-	-- Create footsteps when you walk
-	if love.keyboard.isScancodeDown("left", "right", "up", "down") and not self.dead then
-		self.step_timer = self.step_timer + dt
-	else
-		self.step_timer = step_speed
-	end
-
-	if self.step_timer > step_speed then
+	-- Play footstep soudns
+	if self.step_timer > self.step_speed then
 		-- The player stepped
 		self.step_timer = 0
 		table.insert( self.pulse_array, Pulse:new(self.world, player:x(), player:y(), 0.18, 30, 255, 255, 255) )
@@ -153,11 +157,13 @@ function player:respawn()
 end
 
 function player:die(killer)
-	self.dead = true
-	if killer == "zombie" then
-		self.death_text = self.zombie_death_text[love.math.random(#self.zombie_death_text)]
-	elseif killer == "lava" then
-		self.death_text = self.lava_death_text[love.math.random(#self.lava_death_text)]
+	if not self.dead then
+		self.dead = true
+		if killer == "zombie" then
+			self.death_text = self.zombie_death_text[love.math.random(#self.zombie_death_text)]
+		elseif killer == "lava" then
+			self.death_text = self.lava_death_text[love.math.random(#self.lava_death_text)]
+		end
 	end
 end
 

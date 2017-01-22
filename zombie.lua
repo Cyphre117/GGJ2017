@@ -36,6 +36,7 @@ function Zombie:new(world, x, y)
 	o.step_timer = 0
 	o.charging = false
 	o.move_timer = 1
+	o.step_speed = 1/8
 
 	-- left foot
 	table.insert(o.left_walk_sounds, love.audio.newSource("audio/Footsteps/Left_Foot_Zombie_Walk_01.wav", "static"))
@@ -70,15 +71,19 @@ end
 
 function Zombie:update( dt )
 	-- steps per second
-	local step_speed = 1/8
 
+	-- Play walking sounds + make footstep pulses
 	if self.charging and not self.dead then
 		self.step_timer = self.step_timer + dt
 
-		if self.step_timer > step_speed then
+		if self.step_timer > self.step_speed then
 			self.step_timer = 0
 
-			table.insert( zombie_pulse_array, {lifetime = 1.5, x = self.body:getX(), y = self.body:getY(), velocity=20 } )
+			table.insert( zombie_pulse_array,
+				{lifetime = 1.5,
+				x = self.body:getX(),
+				y = self.body:getY(),
+				velocity=20 } )
 
 			if self.left_foot then
 				local id = love.math.random(#self.left_walk_sounds)
@@ -96,7 +101,7 @@ function Zombie:update( dt )
 			end
 		end
 	else
-		self.step_timer = step_speed
+		self.step_timer = self.step_speed
 	end
 
 	-- update all pulses
