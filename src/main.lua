@@ -30,7 +30,7 @@ function love.load()
 
 	level_filepath = "images/"..level_list[level_index]
 
-	walls, lavas, zombies, bounds = createLevelFromImage(level_filepath)
+	restart()
 end
 
 function love.update( dt )
