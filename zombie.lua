@@ -72,11 +72,14 @@ function Zombie:update( dt )
 	-- steps per second
 	local step_speed = 1/8
 
-	if self.charging then
+	if self.charging and not self.dead then
 		self.step_timer = self.step_timer + dt
 
 		if self.step_timer > step_speed then
 			self.step_timer = 0
+
+			table.insert( zombie_pulse_array, {lifetime = 1.5, x = self.body:getX(), y = self.body:getY(), velocity=20 } )
+
 			if self.left_foot then
 				local id = love.math.random(#self.left_walk_sounds)
 				-- Stop the audio incaes it's already playing
@@ -114,34 +117,36 @@ function Zombie:update( dt )
 	self.move_timer = self.move_timer - dt
 
 	-- Update charging behaviour
-	if self.charging then
+	if not self.dead then
+		if self.charging then
 
-		if self.move_timer < 0 then
-			self.move_timer = 0
-			self.charging = false
+			if self.move_timer < 0 then
+				self.move_timer = 0
+				self.charging = false
 
-			local x, y = self.body:getLinearVelocity()
-			self.body:setLinearVelocity(x * 0.1, y * 0.1)
+				local x, y = self.body:getLinearVelocity()
+				self.body:setLinearVelocity(x * 0.1, y * 0.1)
+			else
+				self.body:setLinearVelocity(self.target_dirx * 200, self.target_diry * 200)
+			end
 		else
-			self.body:setLinearVelocity(self.target_dirx * 200, self.target_diry * 200)
-		end
-	else
-		-- move randomly and slowly
-		if self.move_timer <= 0 then
-			-- move in a random direction
+			-- move randomly and slowly
+			if self.move_timer <= 0 then
+				-- move in a random direction
 
-			self.body:applyLinearImpulse( love.math.random() * 100, love.math.random() * 100 )
+				self.body:applyLinearImpulse( love.math.random() * 200 - 100, love.math.random() * 200 - 100 )
 
-			self.move_timer = love.math.random() * 5
+				self.move_timer = love.math.random() * 5
 
-			-- Play a random sonar sound
-			local id = love.math.random(#self.sonar_sounds)
-			self.sonar_sounds[id]:stop()
-			self.sonar_sounds[id]:setPosition(self.body:getX(), self.body:getY(), 0)
-			self.sonar_sounds[id]:play()
+				-- Play a random sonar sound
+				local id = love.math.random(#self.sonar_sounds)
+				self.sonar_sounds[id]:stop()
+				self.sonar_sounds[id]:setPosition(self.body:getX(), self.body:getY(), 0)
+				self.sonar_sounds[id]:play()
 
-			-- Add a pulse, going to use a different kind this time
-			table.insert( zombie_pulse_array, {lifetime = 3, x = self.body:getX(), y = self.body:getY()} )
+				-- Add a pulse, going to use a different kind this time
+				table.insert( zombie_pulse_array, {lifetime = 3, x = self.body:getX(), y = self.body:getY(), velocity=10} )
+			end
 		end
 	end
 end
@@ -153,6 +158,7 @@ function Zombie:die()
 	self.death_sounds[id]:setPosition(self.body:getX(), self.body:getY(), 0)
 	self.death_sounds[id]:play()
 	self.dead = true
+	self.body:destroy()
 end
 
 function Zombie:charge(id, x, y, time)
@@ -183,6 +189,6 @@ function draw_zombie_pulses()
 		love.graphics.circle("fill",
 			zombie_pulse_array[i].x,
 			zombie_pulse_array[i].y,
-			(3 - zombie_pulse_array[i].lifetime) * 10 + 10 )
+			(1.5 - zombie_pulse_array[i].lifetime) * zombie_pulse_array[i].velocity + 10 )
 	end
 end

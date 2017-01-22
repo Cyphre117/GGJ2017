@@ -20,8 +20,13 @@ function createLevelFromImage(path)
 	walls = {}
 	lavas = {}
 	zombies = {}
+	bounds = {minx=-(scale/2), maxx=0, miny=-(scale/2), maxy=0}
 
 	level = love.image.newImageData(path)
+
+	bounds.maxx = (level:getWidth()-1)*scale + (scale/2)
+	bounds.maxy = (level:getHeight()-1)*scale + (scale/2)
+
 	for y = 0, level:getHeight()-1 do
 		for x = 0, level:getWidth()-1 do
 			local r, g, b, a = level:getPixel(x, y)
@@ -44,5 +49,5 @@ function createLevelFromImage(path)
 		io.write('\n')
 	end
 
-	return walls, lavas, zombies
+	return walls, lavas, zombies, bounds, love.timer.getTime()
 end

@@ -72,12 +72,16 @@ local zed = {}
 
 function beginContact( a, b, contact )
 	if (a:getUserData().tag == "lava" and b:getUserData().tag == "player") or
-	   (a:getUserData().tag == "player" and b:getUserData().tag == "lava") or
-	   (a:getUserData().tag == "zombie" and b:getUserData().tag == "player") or
-	   (a:getUserData().tag == "player" and b:getUserData().tag == "zombie") then
-		-- Player touched lava
-		player:die()
-
+	   (a:getUserData().tag == "player" and b:getUserData().tag == "lava") then
+	   player:die("lava")
+	elseif (a:getUserData().tag == "zombie" and b:getUserData().tag == "player") then
+		if not a:getUserData().this.dead then
+			player:die("zombie")
+		end
+	elseif (a:getUserData().tag == "player" and b:getUserData().tag == "zombie") then
+		if not b:getUserData().this.dead then
+			player:die("zombie")
+		end
 	elseif (a:getUserData().tag == "lava" and b:getUserData().tag == "zombie") then
 		-- lava is in the zombie
 		b:getUserData().this:die()

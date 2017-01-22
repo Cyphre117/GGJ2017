@@ -18,7 +18,7 @@ function Lava:new(world, x, y, width, height)
 	o.h = height
 
 	o.body = love.physics.newBody( world, x, y, "static" )
-	o.shape = love.physics.newRectangleShape( o.w, o.h )
+	o.shape = love.physics.newRectangleShape( o.w - (o.margin * 2), o.h - (o.margin * 2) )
 	o.fixture = love.physics.newFixture( o.body, o.shape )
 	o.fixture:setSensor( true )
 	o.fixture:setUserData({tag="lava"})
@@ -27,6 +27,10 @@ function Lava:new(world, x, y, width, height)
 end
 
 function Lava:draw()
-	love.graphics.setColor(200, 0, 0, 255)
-	love.graphics.rectangle("fill", self.body:getX() - self.w/2 - self.margin, self.body:getY() - self.h/2 - self.margin, self.w + (self.margin*2), self.h + (self.margin*2))
+	love.graphics.setColor(200 + love.math.random() * 20, 0, 0, 255)
+	love.graphics.rectangle("fill",
+		self.body:getX() - (self.w/2),
+		self.body:getY() - (self.h/2),
+		self.w,
+		self.h)
 end

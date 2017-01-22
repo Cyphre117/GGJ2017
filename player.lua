@@ -5,6 +5,8 @@ player.pulse_array = {}
 player.left_foot_sounds = {}
 player.right_foot_sounds = {}
 player.pulse_sounds = {}
+player.zombie_death_text = {}
+player.lava_death_text = {}
 
 function player:init( world )
 	self.body = love.physics.newBody( world, 0, 0, "dynamic" )
@@ -14,6 +16,17 @@ function player:init( world )
 	self.fixture:setUserData({tag="player"})
 	self.world = world
 	self.left_foot = true
+	self.death_text = ""
+
+	-- load zombie death text
+	for line in love.filesystem.lines("text/dead_by_zombie.txt") do
+	  table.insert(self.zombie_death_text, line)
+	end
+
+	-- load lava death text
+	for line in love.filesystem.lines("text/dead_by_lava.txt") do
+	  table.insert(self.lava_death_text, line)
+	end
 
 	--- Load the sounds
 	-- left foot sounds
@@ -102,7 +115,7 @@ function player:update(dt)
 	if self.step_timer > step_speed then
 		-- The player stepped
 		self.step_timer = 0
-		table.insert( self.pulse_array, Pulse:new(self.world, player:x(), player:y(), 0.15, 25, 255, 255, 255) )
+		table.insert( self.pulse_array, Pulse:new(self.world, player:x(), player:y(), 0.18, 30, 255, 255, 255) )
 
 		self.left_foot = not self.left_foot
 		if self.left_foot then
@@ -110,12 +123,12 @@ function player:update(dt)
 			-- Also set the location of the source to that of the player
 			local id = love.math.random(#self.left_foot_sounds)
 			self.left_foot_sounds[id]:stop()
-			self.left_foot_sounds[id]:setPosition(player:x() - x_vel/2, player:y() - y_vel/2, 0)
+			self.left_foot_sounds[id]:setPosition(player:x() - 5, player:y() - 5, 0)
 			self.left_foot_sounds[id]:play()
 		else
 			local id = love.math.random(#self.right_foot_sounds)
 			self.right_foot_sounds[id]:stop()
-			self.right_foot_sounds[id]:setPosition(player:x() - x_vel/2, player:y() - y_vel/2, 0)
+			self.right_foot_sounds[id]:setPosition(player:x() - 5, player:y() - 5, 0)
 			self.right_foot_sounds[id]:play()
 		end
 	end
@@ -139,21 +152,37 @@ function player:respawn()
 	self.dead = false
 end
 
-function player:die()
+function player:die(killer)
 	self.dead = true
+	if killer == "zombie" then
+		self.death_text = self.zombie_death_text[love.math.random(#self.zombie_death_text)]
+	elseif killer == "lava" then
+		self.death_text = self.lava_death_text[love.math.random(#self.lava_death_text)]
+	end
 end
 
 function player:pulse()
-	table.insert( self.pulse_array, Pulse:new(self.world, player:x(), player:y(), 2, 10, 0, 0, 255) )
+	if not player.dead then
+		table.insert( self.pulse_array, Pulse:new(self.world, player:x(), player:y(), 2, 10, 0, 0, 255) )
 
-	local id = love.math.random(#self.pulse_sounds)
-	self.pulse_sounds[id]:stop()
-	self.pulse_sounds[id]:play()
+		local id = love.math.random(#self.pulse_sounds)
+		self.pulse_sounds[id]:stop()
+		self.pulse_sounds[id]:play()
+	end
 end
 
 function player:draw()
-	love.graphics.setColor(0, 0, 0, 255)
-	love.graphics.circle("fill", self:x(), self:y(), self.radius )
+	if not self.dead then
+		love.graphics.setColor(0, 0, 0, 255)
+		love.graphics.circle("fill", self:x(), self:y(), self.radius )
+	end
+end
+
+function player:draw_hud()
+	if self.dead then
+		love.graphics.setColor(255, 255, 255, 255)
+		love.graphics.print(self.death_text, 20, 20, 0, 5, 5)
+	end
 end
 
 function player:draw_pulses()
