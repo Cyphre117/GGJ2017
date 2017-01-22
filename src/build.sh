@@ -27,7 +27,29 @@ zip -9 -r SoundsInADarkRoom-osx.zip SoundsInADarkRoom.app/
 # cat love.exe and the .love file into one .exe
 cat win/love.exe SoundsInADarkRoom.love > win/SoundsInADarkRoom.exe
 
+# GGJ2017/distribution/win
 cd win
 
 # put all the required items into the windows zip
-zip -9 -r ../SoundsInADarkRoom-win32.zip *.dll *.txt SoundsInADarkRoom.exe
+zip -9 -r ../SoundsInADarkRoom-win32.zip *.dll *.txt *.exe
+
+# GGJ2017/distribution
+cd ..
+
+zip -9 -r SoundsInADarkRoom-release.zip SoundsInADarkRoom-win32.zip SoundsInADarkRoom-osx.zip SoundsInADarkRoom.love HOW-TO-PLAY.md
+rm SoundsInADarkRoom-osx.zip
+rm SoundsInADarkRoom-win32.zip
+rm SoundsInADarkRoom.love
+rm -R SoundsInADarkRoom.app
+
+#GGJ2017
+cd ..
+
+rm SoundsInADarkRoom-src.zip
+rm SoundsInADarkRoom-release.zip
+
+# zip up the source files
+zip -r SoundsInADarkRoom-src.zip src/
+
+# grab the release folder
+mv distribution/SoundsInADarkRoom-release.zip ./
