@@ -174,17 +174,19 @@ function Zombie:update( dt )
 end
 
 function Zombie:die()
-	-- Play random death sound
-	local id = love.math.random(#self.death_sounds)
-	self.death_sounds[id]:stop()
-	self.death_sounds[id]:setPosition(self.body:getX(), self.body:getY(), 0)
-	self.death_sounds[id]:play()
-	self.dead = true
-	self.body:destroy()
+	if not self.dead then
+		-- Play random death sound
+		local id = love.math.random(#self.death_sounds)
+		self.death_sounds[id]:stop()
+		self.death_sounds[id]:setPosition(self.body:getX(), self.body:getY(), 0)
+		self.death_sounds[id]:play()
+		self.dead = true
+		self.body:destroy()
+	end
 end
 
 function Zombie:charge(id, x, y, time)
-	if id > self.target_id then
+	if id > self.target_id and not self.dead then
 		-- Only follow the pulse if it's more recent
 		self.target_id = id
 
@@ -205,7 +207,9 @@ function Zombie:charge(id, x, y, time)
 end
 
 function Zombie:draw()
-	love.graphics.circle("fill", self.body:getX(), self.body:getY(), self.radius)
+	if not self.dead then
+		love.graphics.circle("fill", self.body:getX(), self.body:getY(), self.radius)
+	end
 end
 
 function draw_zombie_pulses()

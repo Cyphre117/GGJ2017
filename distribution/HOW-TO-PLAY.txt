@@ -1,0 +1,28 @@
+# Windows
+
+unzip SoundsInADarkRoom-win32.zip and run the SoundsInADarkRoom.exe inside
+
+# OSX
+
+Unzip SoundsInADarkRoom-osx.zip and run the SoundsInADarkRoom.app. A warning might show up because it's from an unregistered developer, if that happens go into System Preferences > Security & Privacy > General and click open / allow
+
+# Linux
+
+You will need the love package installed somewhere, then run SoundsInADarkRoom.love
+
+## More Info
+
+- https://love2d.org
+- https://love2d.org/wiki/Game_Distribution
+
+## Creating your own levels
+
+1. Change the extension for SoundsInADarkRoom.love from '.love' to '.zip'
+2. unzip it
+3. go into the levels folder to see the existing game levels for inspiration
+4. Create a new .png file, paint in your level and add it to the levels folder
+	- use 100% red for lava
+	- 100% blue for the player spawn
+	- 100% green for zombies
+	- 100% black for walls
+5. execute the folder containg main.lua using the LOVE framework, you can grab it from their website love2d.org

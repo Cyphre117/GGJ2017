@@ -4,8 +4,6 @@
  require "zombie"
 
 local window_width, window_height = love.graphics.getDimensions()
-Physics:init()
-player:init( Physics.world )
 love.math.setRandomSeed(love.timer.getTime())
 
 local walls = {}
@@ -23,7 +21,14 @@ paused = false
 pause_menu_list = {"restart", "levels", "controls", "credits"}
 pause_menu_item = 1
 
+local gamepad_found = false
+local gamepad = nil
+
 function love.load()
+	Physics:init()
+	
+	player = Player:new( Physics.world )
+	
 	level_list = get_level_list()
 
 	level_filepath = "levels/"..level_list[level_index]
@@ -33,8 +38,16 @@ end
 
 function love.update( dt )
 
+	local stick_x, stick_y = 0, 0
+
+	if gamepad_found then
+		stick_x = gamepad:getAxis(1)
+		stick_y = gamepad:getAxis(2)
+
+	end
+
 	-- Player
-	player:update(dt, paused)
+	player:update(dt, paused, stick_x, stick_y)
 
 	-- World physics
 	Physics:update(dt)
@@ -126,6 +139,9 @@ function love.draw()
 			love.graphics.print("You can even create your own levels!\nJust add '.png' files to the levels folder\n\n100% RED = lava\n100% GREEN = zombies\n100% BLUE = player\n100% BLACK = walls", 20, 300, 0, 2, 2)
 		elseif pause_menu_list[pause_menu_item] == "controls" then
 			love.graphics.print("ARROWS: move\nSPACE: sonar\nR: restart\n\nZombies run towards noise\nLava kills everything", 20, 300, 0, 2, 2)
+			if gamepad_found then
+				love.graphics.print("Gamepad detected", 20, window_height - 50, 0, 2, 2)
+			end
 		elseif pause_menu_list[pause_menu_item] == "credits" then
 			love.graphics.print(
 [[Concept/Programming: Tom
@@ -197,6 +213,65 @@ function restart()
 	loaded_level = level_filepath
 end
 
+function love.gamepadpressed(joystick, button)
+	if button == "a" and not paused then
+		player:pulse(Physics.world)
+	end
+
+	if paused then
+		if button == "dpup" then
+
+			-- move index up the menu
+			pause_menu_item = pause_menu_item - 1
+			if pause_menu_item < 1 then pause_menu_item = #pause_menu_list end
+
+		elseif button == "dpdown" then
+
+			-- move index down the menu
+			pause_menu_item = pause_menu_item + 1
+			if pause_menu_item > #pause_menu_list then pause_menu_item = 1 end
+
+		elseif button == "dpright" and pause_menu_list[pause_menu_item] == "levels" then
+
+			-- change selected level
+			level_index = level_index + 1
+			if level_index > #level_list then level_index = 1 end
+			level_filepath = "levels/"..level_list[level_index]
+
+		elseif button == "dpleft" and pause_menu_list[pause_menu_item] == "levels" then
+
+			-- change selected level
+			level_index = level_index - 1
+			if level_index < 1 then level_index = #level_list end
+			level_filepath = "levels/"..level_list[level_index]
+
+		end
+	end
+
+
+	if button == "select" or (paused and pause_menu_list[pause_menu_item] == "restart" and button == "a") then
+		restart()
+		paused = false
+
+	-- enable the menu with either enter or escape
+	elseif not paused and button == "start" then
+		-- update the level list to check for new levels
+		level_list = get_level_list()
+		paused = true
+
+	-- disable the menu with either return or escape, provided restart is not selected
+	elseif paused and (button == "start" or button == "a") then
+
+		paused = false
+		pause_menu_item = 1
+
+		-- if the user change the level, reload it
+		if loaded_level ~= level_filepath then
+			restart()
+		end
+	end
+end
+
 function love.keypressed( keycode, scancode, isrepeat )
 	if scancode == "space" and not paused then
 		player:pulse(Physics.world)
@@ -253,4 +328,18 @@ function love.keypressed( keycode, scancode, isrepeat )
 			restart()
 		end
 	end
+end
+
+function love.joystickadded( joystick )
+	gamepad = love.joystick.getJoysticks()[1]
+	if gamepad:isGamepad() then
+		gamepad_found = true
+	else 
+		gamepad = nil
+	end
+end
+
+function  love.joystickremoved()
+	gamepad_found = false
+	gamepad = nil
 end
