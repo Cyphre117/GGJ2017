@@ -135,18 +135,23 @@ function player:update(dt, paused)
 		self.step_timer = 0
 		table.insert( self.pulse_array, Pulse:new(self.world, player:x(), player:y(), 0.18, 30, 255, 255, 255) )
 
+		local footstep_x_offset, footstep_y_offset = 0, 0
+		if x_vel > 0 then footstep_x_offset = 5 elseif x_vel < 0 then footstep_x_offset = -5 end
+		if y_vel > 0 then footstep_y_offset = 5 elseif y_vel < 0 then footstep_y_offset = -5 end
+
+
 		self.left_foot = not self.left_foot
 		if self.left_foot then
 			-- have to stop playing sources other wise the wound play form the start
 			-- Also set the location of the source to that of the player
 			local id = love.math.random(#self.left_foot_sounds)
 			self.left_foot_sounds[id]:stop()
-			self.left_foot_sounds[id]:setPosition(player:x() - 5, player:y() - 5, 0)
+			self.left_foot_sounds[id]:setPosition(player:x() - footstep_x_offset, player:y() - footstep_y_offset, 0)
 			self.left_foot_sounds[id]:play()
 		else
 			local id = love.math.random(#self.right_foot_sounds)
 			self.right_foot_sounds[id]:stop()
-			self.right_foot_sounds[id]:setPosition(player:x() - 5, player:y() - 5, 0)
+			self.right_foot_sounds[id]:setPosition(player:x() - footstep_x_offset, player:y() - footstep_y_offset, 0)
 			self.right_foot_sounds[id]:play()
 		end
 	end
