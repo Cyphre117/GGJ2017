@@ -9,6 +9,7 @@ Zombie.prototype = {
 	radius = 15,
 	left_walk_sounds = {},
 	right_walk_sounds = {},
+	alert_sounds = {},
 	sonar_sounds = {},
 	death_sounds = {},
 	dead = false
@@ -66,6 +67,15 @@ function Zombie:new(world, x, y)
 		o.death_sounds[i]:setVolumeLimits(0.6, 1)
 	end
 
+	-- zombie alert sounds
+	table.insert(o.alert_sounds, love.audio.newSource("audio/Zombie_Notice_01.wav", "static"))
+	table.insert(o.alert_sounds, love.audio.newSource("audio/Zombie_Notice_02.wav", "static"))
+	table.insert(o.alert_sounds, love.audio.newSource("audio/Zombie_Notice_03.wav", "static"))
+
+	for i = 1, #o.alert_sounds do
+		o.alert_sounds[i]:setVolumeLimits(0.4, 1)
+	end
+
 	return o
 end
 
@@ -115,6 +125,13 @@ function Zombie:update( dt )
 	for i = 1, #zombie_pulse_array do
 		if zombie_pulse_array[i] ~= nil and zombie_pulse_array[i].lifetime < 0 then
 			table.remove( zombie_pulse_array, i )
+		end
+	end
+
+	-- move sounds and things to the zombies current position
+	if not self.dead then
+		for i = 1, #self.alert_sounds do
+			self.alert_sounds[i]:setPosition(self.body:getX(), self.body:getY())
 		end
 	end
 
@@ -180,7 +197,10 @@ function Zombie:charge(id, x, y, time)
 
 		self.charging = true
 		self.move_timer = time
-		--print('targeting: ', self.target_dirx, ' ', self.target_diry)
+
+		-- Play charging sound
+		local id = love.math.random(#self.alert_sounds)
+		self.alert_sounds[id]:play()
 	end
 end
 

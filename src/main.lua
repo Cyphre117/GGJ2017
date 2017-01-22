@@ -136,7 +136,7 @@ linkedin.com/in/christopher-quinn-sound
 
 More levels by Bogdan, Sam A. and Sam C.
 
-And thanks to Dundee Makerspacefor the awesome jam site!
+And thanks to Dundee Makerspace for the awesome jam site!
 ]], 20, 300, 0, 1.5, 1.5)
 		end
 	end

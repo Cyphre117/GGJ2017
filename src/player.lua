@@ -58,9 +58,9 @@ function player:init( world )
 	self.lava_death_sound = love.audio.newSource("audio/Player Death/Player_Death_Lava.wav")
 	self.lava_death_sound:setVolume(0.5)
 
-	table.insert(  self.zombie_death_sounds, love.audio.newSource("audio/Player Death/Player_Death_Zombie_01.wav"))
-	table.insert(  self.zombie_death_sounds, love.audio.newSource("audio/Player Death/Player_Death_Zombie_02.wav"))
-	table.insert(  self.zombie_death_sounds, love.audio.newSource("audio/Player Death/Player_Death_Zombie_03.wav"))
+	table.insert(  self.zombie_death_sounds, love.audio.newSource("audio/Player Death/Player_Death_Zombie_01.wav", "static"))
+	table.insert(  self.zombie_death_sounds, love.audio.newSource("audio/Player Death/Player_Death_Zombie_02.wav", "static"))
+	table.insert(  self.zombie_death_sounds, love.audio.newSource("audio/Player Death/Player_Death_Zombie_03.wav", "static"))
 	for i = 1, #self.zombie_death_sounds do
 		self.zombie_death_sounds[i]:setVolume(0.5)
 	end
