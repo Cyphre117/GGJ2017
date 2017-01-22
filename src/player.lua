@@ -4,6 +4,8 @@ player = {dead = false, radius = 10, step_timer = 0}
 player.pulse_array = {}
 player.left_foot_sounds = {}
 player.right_foot_sounds = {}
+player.lava_death_sound = nil
+player.zombie_death_sounds = {}
 player.pulse_sounds = {}
 player.zombie_death_text = {}
 player.lava_death_text = {}
@@ -51,6 +53,18 @@ function player:init( world )
 	table.insert( self.pulse_sounds, love.audio.newSource("audio/Sonar/Sonar_Player_01.wav", "static"))
 	table.insert( self.pulse_sounds, love.audio.newSource("audio/Sonar/Sonar_Player_02.wav", "static"))
 	table.insert( self.pulse_sounds, love.audio.newSource("audio/Sonar/Sonar_Player_03.wav", "static"))
+
+	-- death sounds
+	self.lava_death_sound = love.audio.newSource("audio/Player Death/Player_Death_Lava.wav")
+	self.lava_death_sound:setVolume(0.5)
+
+	table.insert(  self.zombie_death_sounds, love.audio.newSource("audio/Player Death/Player_Death_Zombie_01.wav"))
+	table.insert(  self.zombie_death_sounds, love.audio.newSource("audio/Player Death/Player_Death_Zombie_02.wav"))
+	table.insert(  self.zombie_death_sounds, love.audio.newSource("audio/Player Death/Player_Death_Zombie_03.wav"))
+	for i = 1, #self.zombie_death_sounds do
+		self.zombie_death_sounds[i]:setVolume(0.5)
+	end
+
 
 	for i = 1, #self.pulse_sounds do
 		self.pulse_sounds[i]:setVolume(0.4)
@@ -160,9 +174,22 @@ function player:die(killer)
 	if not self.dead then
 		self.dead = true
 		if killer == "zombie" then
+			-- set death text
 			self.death_text = self.zombie_death_text[love.math.random(#self.zombie_death_text)]
+
+			-- play sounds for killed by zombie
+			local id = love.math.random(#self.zombie_death_sounds)
+			self.zombie_death_sounds[id]:stop()
+			self.zombie_death_sounds[id]:setPosition(player:x(), player:y(), 0)
+			self.zombie_death_sounds[id]:play()
 		elseif killer == "lava" then
+			-- set death text
 			self.death_text = self.lava_death_text[love.math.random(#self.lava_death_text)]
+
+			-- play sounds for killed by lava
+			self.lava_death_sound:stop()
+			self.lava_death_sound:setPosition(player:x(), player:y(), 0)
+			self.lava_death_sound:play()
 		end
 	end
 end
