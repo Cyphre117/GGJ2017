@@ -27,31 +27,32 @@ pause_menu = Menu:new()
 active_update = function() print('no update') end
 active_draw = function() print('no draw') end
 
-current_state = PlayingState
+current_state = PauseMenuState
 
 function love.load()
 	love.math.setRandomSeed(love.timer.getTime())
 
-	pause_menu:add_item("restart", "restart", function(k, g) if k == "return" or g == "a" then restart() end end)
+	MainMenuState:init()
+	PlayingState:init()
+	PauseMenuState:init()
+	Physics:init()
+
+	pause_menu:add_item("restart", "restart", function(k, g) if k == "return" or g == "a" then PlayingState:restart() end end)
 	pause_menu:add_item("levels", "levels", select_level)
 	pause_menu:add_item("controls", "controls", nil)
 	pause_menu:add_item("credits", "credits", nil)
 
-	Physics:init()
-	
 	player = Player:new( Physics.world, 0, 0 )
 	
 	level_list = get_level_list()
 
 	level_filepath = "levels/"..level_list[level_index]
 
-	restart()
+	PlayingState:restart()
 	select_level()
 
 	pause_menu.active = true
 	pause_menu.index = 3
-
-	active_draw = playing_draw
 end
 
 function love.update( dt )
@@ -59,28 +60,11 @@ function love.update( dt )
 end
 
 function love.draw()
-	active_draw()
 	current_state:draw()
 end
 
 function love.joystickpressed(joystick, button)
-	-- On OSX using the XBox360 drivers the controller was not recognized by love as a gamepad
-	if joystick:getName() == "Xbox 360 Wired Controller" then
-		if button == 1 and not pause_menu.active then
-			player:pulse(Physics.world)
-		end
-
-		if button == 1 then pause_menu:handle_input(nil, "a") end
-		if button == 9 then pause_menu:handle_input(nil, "start") end
-		if button == 10 then
-			pause_menu:handle_input(nil, "back")
-			if not pause_menu.active then restart() end
-		end
-		if button == 12 then pause_menu:handle_input(nil, "dpup") end
-		if button == 13 then pause_menu:handle_input(nil, "dpdown") end
-		if button == 14 then pause_menu:handle_input(nil, "dpleft") end
-		if button == 15 then pause_menu:handle_input(nil, "dpright") end
-	end
+	current_state:joystickpressed(joystick, button)
 end
 
 function love.gamepadpressed(gamepad, button)
@@ -93,8 +77,10 @@ function love.gamepadpressed(gamepad, button)
 
 	-- restart by pressing select
 	if button == "back" and not pause_menu.active then
-		restart()
+		PlayingState:restart()
 	end
+
+	current_state:gamepadpressed(gamepad, button)
 end
 
 function love.keypressed( keycode, scancode, isrepeat )
@@ -106,8 +92,10 @@ function love.keypressed( keycode, scancode, isrepeat )
 
 	-- Restart with the R key
 	if scancode == "r" and pause_menu.active == false then
-		restart()
+		PlayingState:restart()
 	end
+
+	current_state:keypressed(keycode, scancode, isrepeat)
 end
 
 function love.joystickadded( joystick )
@@ -130,130 +118,6 @@ end
 
 function love.resize( w, h )
 	screen_width, screen_height = w, h
-end
-
-function for_each( table, func )
-	for i=1, #table do
-		table:func()
-	end
-end
-
-function playing_draw()
-
-	-- Start Rendering world
-	camera:set()
-	camera:trackPlayer(player, screen_width, screen_height)
-
-	-- Draw everything back to front
-	--- Background
-	if draw_world then
-		love.graphics.setBackgroundColor( 150, 150, 150 )
-	else
-		love.graphics.setBackgroundColor( 0, 0, 0 )
-	end
-	--- Lava first
-	for i=1, #lavas do
-		lavas[i]:draw()
-	end
-
-	--- Pulses
-	love.graphics.setLineWidth( 5 )
-	player:draw_pulses()
-
-	--- Walls
-	love.graphics.setColor( 0, 0, 0 )
-	for i=1, #walls do
-		drawPhysicsBox( walls[i] )
-	end
-
-	--- Outer boundaries
-	love.graphics.setColor(0, 0, 0, 255)
-	love.graphics.rectangle("fill", bounds.minx, bounds.miny - screen_height, -1000, (bounds.maxy - bounds.miny) + screen_height*2)
-	love.graphics.rectangle("fill", bounds.maxx, bounds.miny - screen_height,  1000, (bounds.maxy - bounds.miny) + screen_height*2)
-	love.graphics.rectangle("fill", bounds.minx, bounds.miny, (bounds.maxx - bounds.minx), -1000)
-	love.graphics.rectangle("fill", bounds.minx, bounds.maxy, (bounds.maxx - bounds.minx), 1000)
-
-	--- Zombies
-	for i=1, #zombies do
-		love.graphics.setLineWidth(2)
-		zombies[i]:draw_pulses()
-	end
-
-	-- love.graphics.setColor(0, 0, 0, 255)
-	-- for_each( zombies, Zombie.draw )
-	for i=1, #zombies do
-		love.graphics.setColor(0, 0, 0, 255)
-		zombies[i]:draw()
-	end
-
-	--- Player
-	player:draw()
-
-	-- Finished rendering world
-	camera:unset()
-
-	-- Now render the HUD
-	if player.dead then pause_menu.active = true end
-
-	pause_menu:draw()
-
-	if pause_menu.active then
-		if pause_menu:selected_text() == "levels" then
-			love.graphics.print(
-[[You can even create your own levels!
-Just add '.png' files to the levels folder
-
-100% RED = lava
-100% GREEN = zombies
-100% BLUE = player
-100% BLACK = walls]], 20, 300, 0, 2, 2)
-		elseif pause_menu:selected_text() == "controls" then
-			love.graphics.print(
-[[ARROWS: move
-SPACE: sonar
-R: restart
-
-Zombies run towards noise
-Lava kills everything]]
-, 20, 300, 0, 2, 2)
-			if controller.connection then
-				love.graphics.print("Controller: "..controller.name, 20, screen_height - 50, 0, 2, 2)
-			end
-		elseif pause_menu:selected_text() == "credits" then
-			love.graphics.print(
-[[Concept/Programming: Tom
-@HopeThomasj
-
-Audio: Chris
-linkedin.com/in/christopher-quinn-sound
-
-More levels by Bogdan, Sam A. and Sam C.
-
-And thanks to Dundee Makerspace for the awesome jam site!]]
-, 20, 300, 0, 1.5, 1.5)
-		end
-	end
-
-	player:draw_hud()
-	if not player.dead and #zombies == 0 then
-		-- you won the game
-		pause_menu.active = true
-
-		if level_start_time > 0 then
-			level_time_taken = love.timer.getTime() - level_start_time
-			level_start_time = 0
-		end
-
-		love.graphics.setColor(255, 255, 255, 255)
-		love.graphics.print("YOU KILLED EVERYTHING", 20, 20, 0, 4, 4)
-		love.graphics.print("Time: "..string.format("%.2f", level_time_taken), 20, 80, 0, 2, 2)
-	end
-end
-
-function paused_update( dt )
-end
-
-function paused_draw()
 end
 
 function clear_level()
@@ -320,13 +184,6 @@ function update_input()
 	end
 end
 
-function restart()
-	clear_level()
-	walls, lavas, zombies, bounds, level_start_time = createLevelFromImage(level_filepath)
-	loaded_level = level_filepath
-	pause_menu.active = false
-end
-
 function select_level( keyboard_pressed, gamepad_pressed )
 	-- update the level list each time
 	level_list = get_level_list()
@@ -348,7 +205,7 @@ function select_level( keyboard_pressed, gamepad_pressed )
 
 	elseif keyboard_pressed == "return" or gamepad_pressed == "a" then
 		if loaded_level ~= level_filepath then
-			restart()
+			PlayingState:restart()
 		end
 	end
 
