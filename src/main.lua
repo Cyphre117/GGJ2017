@@ -2,6 +2,7 @@
  require "camera"
  require "lava"
  require "zombie"
+ require "menu"
 
 screen_width, screen_height = love.graphics.getDimensions()
 
@@ -16,16 +17,22 @@ local level_filepath = ""				-- path to the image data for the level
 local level_list = {}					-- array of all .png images in the image folder
 local level_index = 1					-- index of the currently selected level
 local loaded_level = level_filepath		-- name of the last level that was loaded
-local paused = false
-local pause_menu_list = {"restart", "levels", "controls", "credits"}
-local pause_menu_item = 1
+--local pause_menu.active = false
+--local pause_menu_list = {"restart", "levels", "controls", "credits"}
+--local pause_menu_item = 1
 local gamepad_found = false
 local gamepad = nil
 local directions = {x_axis = 0, y_axis = 0}
+local pause_menu = Menu:new()
 
 function love.load()
 	love.math.setRandomSeed(love.timer.getTime())
-	
+
+	pause_menu:add_item("restart", "restart", function(k, g) if k == "return" or g == "a" then restart() end end)
+	pause_menu:add_item("levels", "levels", select_level)
+	pause_menu:add_item("controls", "controls", nil)
+	pause_menu:add_item("credits", "credits", nil)
+
 	Physics:init()
 	
 	player = Player:new( Physics.world )
@@ -35,13 +42,17 @@ function love.load()
 	level_filepath = "levels/"..level_list[level_index]
 
 	restart()
+	select_level()
 end
 
 function love.update( dt )
+
 	update_input()
 
+	pause_menu:update( dt )
+
 	-- Player
-	player:update(dt, paused, directions)
+	player:update(dt, pause_menu.active, directions)
 
 	-- World physics
 	Physics:update(dt)
@@ -109,27 +120,29 @@ function love.draw()
 	camera:unset()
 
 	-- Now render the HUD
-	if player.dead then paused = true end
+	if player.dead then pause_menu.active = true end
 
-	if paused then
-		love.graphics.setColor(0, 0, 0, 100)
-		love.graphics.rectangle("fill", 0, 0, screen_width, screen_height)
+	pause_menu:draw()
 
-		love.graphics.setColor(255, 0, 0, 100)
-		love.graphics.setColor(255, 255, 255, 255)
-		for i = 1, # pause_menu_list do
-			local pre = "  "
-			if i == pause_menu_item then pre = "> " end
-			if pause_menu_list[i] == "levels" then
-				love.graphics.print(pre.."level: "..GetFileName(level_filepath), 20, 120 + 30 * i, 0, 2, 2)
-			else
-				love.graphics.print(pre..pause_menu_list[i], 20, 120 + 30 * i, 0, 2, 2)
-			end
-		end
+	if pause_menu.active then
+		-- love.graphics.setColor(0, 0, 0, 100)
+		-- love.graphics.rectangle("fill", 0, 0, screen_width, screen_height)
 
-		if pause_menu_list[pause_menu_item] == "levels" then
+		-- love.graphics.setColor(255, 0, 0, 100)
+		-- love.graphics.setColor(255, 255, 255, 255)
+		-- for i = 1, # pause_menu_list do
+		-- 	local pre = "  "
+		-- 	if i == pause_menu_item then pre = "> " end
+		-- 	if pause_menu_list[i] == "levels" then
+		-- 		love.graphics.print(pre.."level: "..GetFileName(level_filepath), 20, 120 + 30 * i, 0, 2, 2)
+		-- 	else
+		-- 		love.graphics.print(pre..pause_menu_list[i], 20, 120 + 30 * i, 0, 2, 2)
+		-- 	end
+		-- end
+
+		if pause_menu:selected_text() == "levels" then
 			love.graphics.print("You can even create your own levels!\nJust add '.png' files to the levels folder\n\n100% RED = lava\n100% GREEN = zombies\n100% BLUE = player\n100% BLACK = walls", 20, 300, 0, 2, 2)
-		elseif pause_menu_list[pause_menu_item] == "controls" then
+		elseif pause_menu:selected_text() == "controls" then
 			love.graphics.print(
 [[ARROWS: move
 SPACE: sonar
@@ -141,7 +154,7 @@ Lava kills everything]]
 			if gamepad_found then
 				love.graphics.print("Gamepad detected", 20, screen_height - 50, 0, 2, 2)
 			end
-		elseif pause_menu_list[pause_menu_item] == "credits" then
+		elseif pause_menu:selected_text() == "credits" then
 			love.graphics.print(
 [[Concept/Programming: Tom
 @HopeThomasj
@@ -159,7 +172,7 @@ And thanks to Dundee Makerspace for the awesome jam site!]]
 	player:draw_hud()
 	if not player.dead and #zombies == 0 then
 		-- you won the game
-		paused = true
+		pause_menu.active = true
 
 		if level_start_time > 0 then
 			level_time_taken = love.timer.getTime() - level_start_time
@@ -241,122 +254,62 @@ function restart()
 	clear_level()
 	walls, lavas, zombies, bounds, level_start_time = createLevelFromImage(level_filepath)
 	loaded_level = level_filepath
+	pause_menu.active = false
+end
+
+function select_level( keyboard_pressed, gamepad_pressed )
+	-- update the level list each time
+	level_list = get_level_list()
+
+	if keyboard_pressed == "right" or gamepad_pressed == "dpright" then
+
+		-- change selected level
+		level_index = level_index + 1
+		if level_index > #level_list then level_index = 1 end
+		level_filepath = "levels/"..level_list[level_index]
+
+	elseif keyboard_pressed == "left" or gamepad_pressed == "dpleft" then
+
+		-- change selected level
+		level_index = level_index - 1
+		if level_index < 1 then level_index = #level_list end
+		level_filepath = "levels/"..level_list[level_index]
+
+
+	elseif keyboard_pressed == "return" or gamepad_pressed == "a" then
+		if loaded_level ~= level_filepath then
+			restart()
+		end
+	end
+
+	-- indicate which is the 
+	pause_menu.items[2].text = "level: "..GetFileName(level_filepath)
 end
 
 function love.gamepadpressed(joystick, button)
 
-	if button == "a" and not paused then
+	if button == "a" and not pause_menu.active then
 		player:pulse(Physics.world)
 	end
 
-	if paused then
-		if button == "dpup" then
+	pause_menu:handle_input(nil, button)
 
-			-- move index up the menu
-			pause_menu_item = pause_menu_item - 1
-			if pause_menu_item < 1 then pause_menu_item = #pause_menu_list end
-
-		elseif button == "dpdown" then
-
-			-- move index down the menu
-			pause_menu_item = pause_menu_item + 1
-			if pause_menu_item > #pause_menu_list then pause_menu_item = 1 end
-
-		elseif button == "dpright" and pause_menu_list[pause_menu_item] == "levels" then
-
-			-- change selected level
-			level_index = level_index + 1
-			if level_index > #level_list then level_index = 1 end
-			level_filepath = "levels/"..level_list[level_index]
-
-		elseif button == "dpleft" and pause_menu_list[pause_menu_item] == "levels" then
-
-			-- change selected level
-			level_index = level_index - 1
-			if level_index < 1 then level_index = #level_list end
-			level_filepath = "levels/"..level_list[level_index]
-
-		end
-	end
-
-	if button == "select" or (paused and pause_menu_list[pause_menu_item] == "restart" and button == "a") then
+	-- restart by pressing select
+	if button == "back" and not pause_menu.active then
 		restart()
-		paused = false
-
-	-- enable the menu with either enter or escape
-	elseif not paused and button == "start" then
-		-- update the level list to check for new levels
-		level_list = get_level_list()
-		paused = true
-
-	-- disable the menu with either return or escape, provided restart is not selected
-	elseif paused and (button == "start" or button == "a") then
-
-		paused = false
-		pause_menu_item = 1
-
-		-- if the user change the level, reload it
-		if loaded_level ~= level_filepath then
-			restart()
-		end
 	end
 end
 
 function love.keypressed( keycode, scancode, isrepeat )
-	if scancode == "space" and not paused then
+	if scancode == "space" and not pause_menu.active then
 		player:pulse(Physics.world)
 	end
 
-	if paused then
-		if scancode == "up" then
+	pause_menu:handle_input(scancode, nil)
 
-			-- move index up the menu
-			pause_menu_item = pause_menu_item - 1
-			if pause_menu_item < 1 then pause_menu_item = #pause_menu_list end
-
-		elseif scancode == "down" then
-
-			-- move index down the menu
-			pause_menu_item = pause_menu_item + 1
-			if pause_menu_item > #pause_menu_list then pause_menu_item = 1 end
-
-		elseif scancode == "right" and pause_menu_list[pause_menu_item] == "levels" then
-
-			-- change selected level
-			level_index = level_index + 1
-			if level_index > #level_list then level_index = 1 end
-			level_filepath = "levels/"..level_list[level_index]
-
-		elseif scancode == "left" and pause_menu_list[pause_menu_item] == "levels" then
-
-			-- change selected level
-			level_index = level_index - 1
-			if level_index < 1 then level_index = #level_list end
-			level_filepath = "levels/"..level_list[level_index]
-
-		end
-	end
-
-	if scancode == "r" or (paused and pause_menu_list[pause_menu_item] == "restart" and scancode == "return") then
+	-- Restart with the R key
+	if scancode == "r" and pause_menu.active == false then
 		restart()
-		paused = false
-
-	-- enable the menu with either enter or escape
-	elseif not paused and (scancode == "escape" or scancode == "return") then
-		-- update the level list to check for new levels
-		level_list = get_level_list()
-		paused = true
-
-	-- disable the menu with either return or escape, provided restart is not selected
-	elseif paused and (scancode == "escape" or scancode == "return") then
-
-		paused = false
-		pause_menu_item = 1
-
-		-- if the user change the level, reload it
-		if loaded_level ~= level_filepath then
-			restart()
-		end
 	end
 end
 
