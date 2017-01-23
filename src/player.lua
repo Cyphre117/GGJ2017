@@ -110,32 +110,15 @@ function Player:y()
 	return self.body:getY()
 end
 
-function Player:update(dt, paused, stick_x, stick_y)
+function Player:update(dt, paused, directions)
 
 	local x_vel = 0
 	local y_vel = 0
 
 	if self.dead == false and paused == false then
 
-		-- If these is not controller stick input, use the arrow keys
-		if math.abs(stick_x) < 0.2 and math.abs(stick_y) < 0.2 then
-			if love.keyboard.isScancodeDown("right") then
-				x_vel = x_vel + self.speed
-			end
-			if love.keyboard.isScancodeDown("left") then
-				x_vel = x_vel - self.speed
-			end
-			if love.keyboard.isScancodeDown("up") then
-				y_vel = y_vel - self.speed
-			end
-			if love.keyboard.isScancodeDown("down") then
-				y_vel = y_vel + self.speed
-			end
-		else
-			-- use the stick input for the controller
-			x_vel = self.speed * stick_x
-			y_vel = self.speed * stick_y
-		end
+		x_vel = self.speed * directions.x_axis
+		y_vel = self.speed * directions.y_axis
 
 		-- Create footsteps when you walk
 		if x_vel ~= 0 or y_vel ~= 0 then

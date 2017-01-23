@@ -3,8 +3,7 @@
  require "lava"
  require "zombie"
 
-local window_width, window_height = love.graphics.getDimensions()
-love.math.setRandomSeed(love.timer.getTime())
+screen_width, screen_height = love.graphics.getDimensions()
 
 local walls = {}
 local lavas = {}
@@ -17,14 +16,16 @@ local level_filepath = ""				-- path to the image data for the level
 local level_list = {}					-- array of all .png images in the image folder
 local level_index = 1					-- index of the currently selected level
 local loaded_level = level_filepath		-- name of the last level that was loaded
-paused = false
-pause_menu_list = {"restart", "levels", "controls", "credits"}
-pause_menu_item = 1
-
+local paused = false
+local pause_menu_list = {"restart", "levels", "controls", "credits"}
+local pause_menu_item = 1
 local gamepad_found = false
 local gamepad = nil
+local directions = {x_axis = 0, y_axis = 0}
 
 function love.load()
+	love.math.setRandomSeed(love.timer.getTime())
+	
 	Physics:init()
 	
 	player = Player:new( Physics.world )
@@ -37,17 +38,10 @@ function love.load()
 end
 
 function love.update( dt )
-
-	local stick_x, stick_y = 0, 0
-
-	if gamepad_found then
-		stick_x = gamepad:getAxis(1)
-		stick_y = gamepad:getAxis(2)
-
-	end
+	update_input()
 
 	-- Player
-	player:update(dt, paused, stick_x, stick_y)
+	player:update(dt, paused, directions)
 
 	-- World physics
 	Physics:update(dt)
@@ -66,7 +60,7 @@ end
 function love.draw()
 	-- Start Rendering world
 	camera:set()
-	camera:trackPlayer(player, window_width, window_height)
+	camera:trackPlayer(player, screen_width, screen_height)
 
 	-- Draw everything back to front
 	--- Background
@@ -92,8 +86,8 @@ function love.draw()
 
 	--- Outer boundaries
 	love.graphics.setColor(0, 0, 0, 255)
-	love.graphics.rectangle("fill", bounds.minx, bounds.miny - window_height, -1000, (bounds.maxy - bounds.miny) + window_height*2)
-	love.graphics.rectangle("fill", bounds.maxx, bounds.miny - window_height,  1000, (bounds.maxy - bounds.miny) + window_height*2)
+	love.graphics.rectangle("fill", bounds.minx, bounds.miny - screen_height, -1000, (bounds.maxy - bounds.miny) + screen_height*2)
+	love.graphics.rectangle("fill", bounds.maxx, bounds.miny - screen_height,  1000, (bounds.maxy - bounds.miny) + screen_height*2)
 	love.graphics.rectangle("fill", bounds.minx, bounds.miny, (bounds.maxx - bounds.minx), -1000)
 	love.graphics.rectangle("fill", bounds.minx, bounds.maxy, (bounds.maxx - bounds.minx), 1000)
 
@@ -119,7 +113,7 @@ function love.draw()
 
 	if paused then
 		love.graphics.setColor(0, 0, 0, 100)
-		love.graphics.rectangle("fill", 0, 0, window_width, window_height)
+		love.graphics.rectangle("fill", 0, 0, screen_width, screen_height)
 
 		love.graphics.setColor(255, 0, 0, 100)
 		love.graphics.setColor(255, 255, 255, 255)
@@ -145,7 +139,7 @@ Zombies run towards noise
 Lava kills everything]]
 , 20, 300, 0, 2, 2)
 			if gamepad_found then
-				love.graphics.print("Gamepad detected", 20, window_height - 50, 0, 2, 2)
+				love.graphics.print("Gamepad detected", 20, screen_height - 50, 0, 2, 2)
 			end
 		elseif pause_menu_list[pause_menu_item] == "credits" then
 			love.graphics.print(
@@ -212,6 +206,37 @@ function get_level_list()
 	return png_files
 end
 
+function update_input()
+
+	-- get arrow key input
+	if love.keyboard.isScancodeDown("left") then
+		directions.x_axis = -1
+	elseif love.keyboard.isScancodeDown("right") then
+		directions.x_axis = 1
+	else
+		directions.x_axis = 0
+	end
+
+	if love.keyboard.isScancodeDown("up") then
+		directions.y_axis = -1
+	elseif love.keyboard.isScancodeDown("down") then
+		directions.y_axis = 1
+	else
+		directions.y_axis = 0
+	end
+
+	-- get controler axis input
+	if gamepad_found then
+		if math.abs(gamepad:getAxis(1)) > 0.2 then
+			directions.x_axis = gamepad:getAxis(1)
+		end
+		if math.abs(gamepad:getAxis(2)) > 0.2 then
+			directions.y_axis = gamepad:getAxis(2)
+		end
+	end
+
+end
+
 function restart()
 	clear_level()
 	walls, lavas, zombies, bounds, level_start_time = createLevelFromImage(level_filepath)
@@ -219,6 +244,7 @@ function restart()
 end
 
 function love.gamepadpressed(joystick, button)
+
 	if button == "a" and not paused then
 		player:pulse(Physics.world)
 	end
@@ -252,7 +278,6 @@ function love.gamepadpressed(joystick, button)
 
 		end
 	end
-
 
 	if button == "select" or (paused and pause_menu_list[pause_menu_item] == "restart" and button == "a") then
 		restart()
@@ -344,7 +369,11 @@ function love.joystickadded( joystick )
 	end
 end
 
-function  love.joystickremoved()
+function love.joystickremoved()
 	gamepad_found = false
 	gamepad = nil
+end
+
+function love.resize( w, h )
+	screen_width, screen_height = w, h
 end
