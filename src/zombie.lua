@@ -3,17 +3,22 @@ require "player"
 
 Zombie = {}
 Zombie.prototype = {
+	dead = false,
 	target_dirx = 0,
 	target_diry = 0,
 	target_id = 0,
-	radius = 15,
+	size = 15,
+	left_foot = true,
+	step_timer = 0,
+	charging = false,
+	move_timer = 1,
+	step_speed = 1/8,
 	pulse_array = {},
 	left_walk_sounds = {},
 	right_walk_sounds = {},
 	alert_sounds = {},
 	sonar_sounds = {},
-	death_sounds = {},
-	dead = false
+	death_sounds = {}
 }
 
 --local zombie_pulse_array = {}
@@ -31,14 +36,9 @@ function Zombie:new(world, x, y)
 
 	o.body = love.physics.newBody( world, x, y, "dynamic" )
 	o.body:setLinearDamping( 0.5 )
-	o.shape = love.physics.newCircleShape( o.radius )
+	o.shape = love.physics.newCircleShape( o.size )
 	o.fixture = love.physics.newFixture( o.body, o.shape )
 	o.fixture:setUserData( {tag="zombie", this=o} )
-	o.left_foot = true
-	o.step_timer = 0
-	o.charging = false
-	o.move_timer = 1
-	o.step_speed = 1/8
 
 	-- left foot
 	table.insert(o.left_walk_sounds, love.audio.newSource("audio/Footsteps/Left_Foot_Zombie_Walk_01.wav", "static"))
@@ -183,6 +183,7 @@ function Zombie:die()
 		self.death_sounds[id]:play()
 		self.dead = true
 		self.body:destroy()
+		self.body:destroy()
 
 	end
 end
@@ -210,7 +211,7 @@ end
 
 function Zombie:draw()
 	if not self.dead then
-		love.graphics.circle("fill", self.body:getX(), self.body:getY(), self.radius)
+		love.graphics.circle("fill", self.body:getX(), self.body:getY(), self.size)
 	end
 end
 

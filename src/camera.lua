@@ -17,8 +17,8 @@ function camera:unset()
 end
 
 function camera:trackPlayer(player, width, height)
-	self.x = player:x() - width/2 or self.x
-	self.y = player:y() - height/2 or self.y
+	self.x = player.x - width/2 or self.x
+	self.y = player.y - height/2 or self.y
 end
 
 function camera:move(dx, dy)

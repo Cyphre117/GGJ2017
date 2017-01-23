@@ -3,27 +3,31 @@
  require "lava"
  require "zombie"
  require "menu"
+ require "MainMenuState"
+ require "PauseMenuState"
+ require "PlayingState"
 
 screen_width, screen_height = love.graphics.getDimensions()
 
-local walls = {}
-local lavas = {}
-local zombies = {}
-local bounds = {}
-local draw_world = false
-local level_start_time = 0
-local level_time_taken = 0
-local level_filepath = ""				-- path to the image data for the level
-local level_list = {}					-- array of all .png images in the image folder
-local level_index = 1					-- index of the currently selected level
-local loaded_level = level_filepath		-- name of the last level that was loaded
---local pause_menu.active = false
---local pause_menu_list = {"restart", "levels", "controls", "credits"}
---local pause_menu_item = 1
-local gamepad_found = false
-local gamepad = nil
-local directions = {x_axis = 0, y_axis = 0}
-local pause_menu = Menu:new()
+walls = {}
+lavas = {}
+zombies = {}
+bounds = {}
+draw_world = false
+level_start_time = 0
+level_time_taken = 0
+level_filepath = ""				-- path to the image data for the level
+level_list = {}					-- array of all .png images in the image folder
+level_index = 1					-- index of the currently selected level
+loaded_level = level_filepath		-- name of the last level that was loaded
+controller = {connection=nil, type="none", name=""}
+directions = {x_axis = 0, y_axis = 0}
+pause_menu = Menu:new()
+
+active_update = function() print('no update') end
+active_draw = function() print('no draw') end
+
+current_state = PlayingState
 
 function love.load()
 	love.math.setRandomSeed(love.timer.getTime())
@@ -35,7 +39,7 @@ function love.load()
 
 	Physics:init()
 	
-	player = Player:new( Physics.world )
+	player = Player:new( Physics.world, 0, 0 )
 	
 	level_list = get_level_list()
 
@@ -43,32 +47,99 @@ function love.load()
 
 	restart()
 	select_level()
+
+	pause_menu.active = true
+	pause_menu.index = 3
+
+	active_draw = playing_draw
 end
 
 function love.update( dt )
-
-	update_input()
-
-	pause_menu:update( dt )
-
-	-- Player
-	player:update(dt, pause_menu.active, directions)
-
-	-- World physics
-	Physics:update(dt)
-
-	-- Zombies
-	for i=1, #zombies do
-		if zombies[i] ~= nil then
-			zombies[i]:update(dt)
-			if zombies[i].dead then
-				table.remove( zombies, i )
-			end
-		end
-	end
+	current_state:update( dt )
 end
 
 function love.draw()
+	active_draw()
+	current_state:draw()
+end
+
+function love.joystickpressed(joystick, button)
+	-- On OSX using the XBox360 drivers the controller was not recognized by love as a gamepad
+	if joystick:getName() == "Xbox 360 Wired Controller" then
+		if button == 1 and not pause_menu.active then
+			player:pulse(Physics.world)
+		end
+
+		if button == 1 then pause_menu:handle_input(nil, "a") end
+		if button == 9 then pause_menu:handle_input(nil, "start") end
+		if button == 10 then
+			pause_menu:handle_input(nil, "back")
+			if not pause_menu.active then restart() end
+		end
+		if button == 12 then pause_menu:handle_input(nil, "dpup") end
+		if button == 13 then pause_menu:handle_input(nil, "dpdown") end
+		if button == 14 then pause_menu:handle_input(nil, "dpleft") end
+		if button == 15 then pause_menu:handle_input(nil, "dpright") end
+	end
+end
+
+function love.gamepadpressed(gamepad, button)
+
+	if button == "a" and not pause_menu.active then
+		player:pulse(Physics.world)
+	end
+
+	pause_menu:handle_input(nil, button)
+
+	-- restart by pressing select
+	if button == "back" and not pause_menu.active then
+		restart()
+	end
+end
+
+function love.keypressed( keycode, scancode, isrepeat )
+	if scancode == "space" and not pause_menu.active then
+		player:pulse(Physics.world)
+	end
+
+	pause_menu:handle_input(scancode, nil)
+
+	-- Restart with the R key
+	if scancode == "r" and pause_menu.active == false then
+		restart()
+	end
+end
+
+function love.joystickadded( joystick )
+	controller.connection = love.joystick.getJoysticks()[1]
+	controller.name = controller.connection:getName()
+
+	if controller.connection:isGamepad() then
+		controller.type = "gamepad"
+	else
+		-- the joystick isn't recognised as a gamepad, but it still might be one
+		controller.type = "joystick"
+	end
+end
+
+function love.joystickremoved()
+	controller.connection = nil
+	controller.type = "none"
+	controller.name = ""
+end
+
+function love.resize( w, h )
+	screen_width, screen_height = w, h
+end
+
+function for_each( table, func )
+	for i=1, #table do
+		table:func()
+	end
+end
+
+function playing_draw()
+
 	-- Start Rendering world
 	camera:set()
 	camera:trackPlayer(player, screen_width, screen_height)
@@ -108,6 +179,8 @@ function love.draw()
 		zombies[i]:draw_pulses()
 	end
 
+	-- love.graphics.setColor(0, 0, 0, 255)
+	-- for_each( zombies, Zombie.draw )
 	for i=1, #zombies do
 		love.graphics.setColor(0, 0, 0, 255)
 		zombies[i]:draw()
@@ -125,23 +198,15 @@ function love.draw()
 	pause_menu:draw()
 
 	if pause_menu.active then
-		-- love.graphics.setColor(0, 0, 0, 100)
-		-- love.graphics.rectangle("fill", 0, 0, screen_width, screen_height)
-
-		-- love.graphics.setColor(255, 0, 0, 100)
-		-- love.graphics.setColor(255, 255, 255, 255)
-		-- for i = 1, # pause_menu_list do
-		-- 	local pre = "  "
-		-- 	if i == pause_menu_item then pre = "> " end
-		-- 	if pause_menu_list[i] == "levels" then
-		-- 		love.graphics.print(pre.."level: "..GetFileName(level_filepath), 20, 120 + 30 * i, 0, 2, 2)
-		-- 	else
-		-- 		love.graphics.print(pre..pause_menu_list[i], 20, 120 + 30 * i, 0, 2, 2)
-		-- 	end
-		-- end
-
 		if pause_menu:selected_text() == "levels" then
-			love.graphics.print("You can even create your own levels!\nJust add '.png' files to the levels folder\n\n100% RED = lava\n100% GREEN = zombies\n100% BLUE = player\n100% BLACK = walls", 20, 300, 0, 2, 2)
+			love.graphics.print(
+[[You can even create your own levels!
+Just add '.png' files to the levels folder
+
+100% RED = lava
+100% GREEN = zombies
+100% BLUE = player
+100% BLACK = walls]], 20, 300, 0, 2, 2)
 		elseif pause_menu:selected_text() == "controls" then
 			love.graphics.print(
 [[ARROWS: move
@@ -151,8 +216,8 @@ R: restart
 Zombies run towards noise
 Lava kills everything]]
 , 20, 300, 0, 2, 2)
-			if gamepad_found then
-				love.graphics.print("Gamepad detected", 20, screen_height - 50, 0, 2, 2)
+			if controller.connection then
+				love.graphics.print("Controller: "..controller.name, 20, screen_height - 50, 0, 2, 2)
 			end
 		elseif pause_menu:selected_text() == "credits" then
 			love.graphics.print(
@@ -183,6 +248,12 @@ And thanks to Dundee Makerspace for the awesome jam site!]]
 		love.graphics.print("YOU KILLED EVERYTHING", 20, 20, 0, 4, 4)
 		love.graphics.print("Time: "..string.format("%.2f", level_time_taken), 20, 80, 0, 2, 2)
 	end
+end
+
+function paused_update( dt )
+end
+
+function paused_draw()
 end
 
 function clear_level()
@@ -239,15 +310,14 @@ function update_input()
 	end
 
 	-- get controler axis input
-	if gamepad_found then
-		if math.abs(gamepad:getAxis(1)) > 0.2 then
-			directions.x_axis = gamepad:getAxis(1)
+	if controller.connection then
+		if math.abs(controller.connection:getAxis(1)) > 0.2 then
+			directions.x_axis = controller.connection:getAxis(1)
 		end
-		if math.abs(gamepad:getAxis(2)) > 0.2 then
-			directions.y_axis = gamepad:getAxis(2)
+		if math.abs(controller.connection:getAxis(2)) > 0.2 then
+			directions.y_axis = controller.connection:getAxis(2)
 		end
 	end
-
 end
 
 function restart()
@@ -284,49 +354,4 @@ function select_level( keyboard_pressed, gamepad_pressed )
 
 	-- indicate which is the 
 	pause_menu.items[2].text = "level: "..GetFileName(level_filepath)
-end
-
-function love.gamepadpressed(joystick, button)
-
-	if button == "a" and not pause_menu.active then
-		player:pulse(Physics.world)
-	end
-
-	pause_menu:handle_input(nil, button)
-
-	-- restart by pressing select
-	if button == "back" and not pause_menu.active then
-		restart()
-	end
-end
-
-function love.keypressed( keycode, scancode, isrepeat )
-	if scancode == "space" and not pause_menu.active then
-		player:pulse(Physics.world)
-	end
-
-	pause_menu:handle_input(scancode, nil)
-
-	-- Restart with the R key
-	if scancode == "r" and pause_menu.active == false then
-		restart()
-	end
-end
-
-function love.joystickadded( joystick )
-	gamepad = love.joystick.getJoysticks()[1]
-	if gamepad:isGamepad() then
-		gamepad_found = true
-	else 
-		gamepad = nil
-	end
-end
-
-function love.joystickremoved()
-	gamepad_found = false
-	gamepad = nil
-end
-
-function love.resize( w, h )
-	screen_width, screen_height = w, h
 end

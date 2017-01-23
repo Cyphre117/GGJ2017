@@ -6,6 +6,8 @@ Player.prototype = {
 	dead = false,
 	size = 10,
 	speed = 100,
+	x = 0,
+	y = 0,
 	left_foot = true,				-- To keep track of alternating foot sounds
 	step_speed = 1/2,				-- steps per second
 	pulse_array = {},
@@ -20,7 +22,7 @@ Player.prototype = {
 	death_text = ""
 }
 
-function Player:new( world )
+function Player:new( world, x, y )
 	
 	-- Create new empty object
 	local o = {}
@@ -34,7 +36,9 @@ function Player:new( world )
 		o[k] = v
 	end
 
-	o.body = love.physics.newBody( world, 0, 0, "dynamic" )
+	o.x = x
+	o.y = y
+	o.body = love.physics.newBody( world, x, y, "dynamic" )
 	o.shape = love.physics.newCircleShape( o.size )
 	o.fixture = love.physics.newFixture( o.body, o.shape, 1 )
 	o.fixture:setRestitution(0)
@@ -102,20 +106,15 @@ function Player:setPosition( x, y )
 	self.body:setPosition( x, y )
 end
 
-function Player:x()
-	return self.body:getX()
-end
-
-function Player:y()
-	return self.body:getY()
-end
-
 function Player:update(dt, paused, directions)
 
 	local x_vel = 0
 	local y_vel = 0
 
 	if self.dead == false and paused == false then
+
+		self.x = self.body:getX()
+		self.y = self.body:getY()
 
 		x_vel = self.speed * directions.x_axis
 		y_vel = self.speed * directions.y_axis
@@ -131,19 +130,19 @@ function Player:update(dt, paused, directions)
 	self.body:setLinearVelocity( x_vel, y_vel )
 
 	-- Set the players posiiton as that of the audio listener
-	love.audio.setPosition(player:x(), player:y(), 0)
+	love.audio.setPosition(self.x, self.y, 0)
 
 	-- Pulses are continously set the location of the listener
 	-- Avoids weird sudden falloff when walking and using sonar
 	for i = 1, #self.pulse_sounds do
-		self.pulse_sounds[i]:setPosition(player:x(), player:y(), 0)
+		self.pulse_sounds[i]:setPosition(self.x, self.y, 0)
 	end
 
 	-- Play footstep soudns
 	if self.step_timer > self.step_speed then
 		-- The player stepped
 		self.step_timer = 0
-		table.insert( self.pulse_array, Pulse:new(self.world, player:x(), player:y(), 0.18, 30, 255, 255, 255) )
+		table.insert( self.pulse_array, Pulse:new(self.world, self.x, self.y, 0.18, 30, 255, 255, 255) )
 
 		local footstep_x_offset, footstep_y_offset = 0, 0
 		if x_vel > 0 then footstep_x_offset = 5 elseif x_vel < 0 then footstep_x_offset = -5 end
@@ -156,12 +155,12 @@ function Player:update(dt, paused, directions)
 			-- Also set the location of the source to that of the player
 			local id = love.math.random(#self.left_foot_sounds)
 			self.left_foot_sounds[id]:stop()
-			self.left_foot_sounds[id]:setPosition(player:x() - footstep_x_offset, player:y() - footstep_y_offset, 0)
+			self.left_foot_sounds[id]:setPosition(self.x - footstep_x_offset, self.y - footstep_y_offset, 0)
 			self.left_foot_sounds[id]:play()
 		else
 			local id = love.math.random(#self.right_foot_sounds)
 			self.right_foot_sounds[id]:stop()
-			self.right_foot_sounds[id]:setPosition(player:x() - footstep_x_offset, player:y() - footstep_y_offset, 0)
+			self.right_foot_sounds[id]:setPosition(self.x - footstep_x_offset, self.y - footstep_y_offset, 0)
 			self.right_foot_sounds[id]:play()
 		end
 	end
@@ -195,7 +194,7 @@ function Player:die(killer)
 			-- play sounds for killed by zombie
 			local id = love.math.random(#self.zombie_death_sounds)
 			self.zombie_death_sounds[id]:stop()
-			self.zombie_death_sounds[id]:setPosition(player:x(), player:y(), 0)
+			self.zombie_death_sounds[id]:setPosition(self.x, self.y, 0)
 			self.zombie_death_sounds[id]:play()
 		elseif killer == "lava" then
 			-- set death text
@@ -203,7 +202,7 @@ function Player:die(killer)
 
 			-- play sounds for killed by lava
 			self.lava_death_sound:stop()
-			self.lava_death_sound:setPosition(player:x(), player:y(), 0)
+			self.lava_death_sound:setPosition(self.x, self.y, 0)
 			self.lava_death_sound:play()
 		end
 
@@ -213,7 +212,7 @@ end
 
 function Player:pulse()
 	if not player.dead then
-		table.insert( self.pulse_array, Pulse:new(self.world, player:x(), player:y(), 2, 10, 0, 0, 255) )
+		table.insert( self.pulse_array, Pulse:new(self.world, self.x, self.y, 2, 10, 0, 0, 255) )
 
 		local id = love.math.random(#self.pulse_sounds)
 		self.pulse_sounds[id]:stop()
@@ -224,7 +223,7 @@ end
 function Player:draw()
 	if not self.dead then
 		love.graphics.setColor(0, 0, 0, 255)
-		love.graphics.circle("fill", self:x(), self:y(), self.size )
+		love.graphics.circle("fill", self.x, self.y, self.size )
 	end
 end
 
