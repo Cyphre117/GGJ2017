@@ -47,19 +47,6 @@ function PlayingState:draw()
 	love.graphics.setLineWidth( 5 )
 	player:draw_pulses()
 
-	--- Walls
-	love.graphics.setColor( 0, 0, 0 )
-	for i=1, #Level.walls do
-		drawPhysicsBox( Level.walls[i] )
-	end
-
-	--- Outer boundaries
-	love.graphics.setColor(0, 0, 0, 255)
-	love.graphics.rectangle("fill", bounds.minx, bounds.miny - screen_height, -1000, (bounds.maxy - bounds.miny) + screen_height*2)
-	love.graphics.rectangle("fill", bounds.maxx, bounds.miny - screen_height,  1000, (bounds.maxy - bounds.miny) + screen_height*2)
-	love.graphics.rectangle("fill", bounds.minx, bounds.miny, (bounds.maxx - bounds.minx), -1000)
-	love.graphics.rectangle("fill", bounds.minx, bounds.maxy, (bounds.maxx - bounds.minx), 1000)
-
 	--- Zombies
 	for i=1, #Level.zombies do
 		love.graphics.setLineWidth(2)
@@ -74,6 +61,8 @@ function PlayingState:draw()
 	--- Player
 	player:draw()
 
+	Level:draw_walls()
+
 	-- Finished rendering world
 	camera:unset()
 
@@ -84,8 +73,8 @@ function PlayingState:draw()
 end
 
 function PlayingState:restart()
-	clear_level()
-	 bounds, level_start_time = Level:load(level_filepath)
+	Level:clear()
+	bounds, level_start_time = Level:load(level_filepath)
 	loaded_level = level_filepath
 	current_state = PlayingState
 end
