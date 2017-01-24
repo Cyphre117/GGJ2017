@@ -10,13 +10,6 @@ function Physics:init()
 	self.world:setCallbacks(beginContact, endContact, preSolve, postSolve)
 end
 
--- function createPhysicsWorld()
--- 	world_scale = 10
--- 	world = love.physics.newWorld( 0, 0, true )
-
--- 	return world, world_scale
--- end
-
 function Physics:update(dt)
 	self.world:update(dt)
 end

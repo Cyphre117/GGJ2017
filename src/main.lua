@@ -22,7 +22,7 @@ level_index = 1					-- index of the currently selected level
 loaded_level = level_filepath		-- name of the last level that was loaded
 controller = {connection=nil, type="none", name=""}
 directions = {x_axis = 0, y_axis = 0}
-pause_menu = Menu:new()
+--pause_menu = Menu:new()
 
 active_update = function() print('no update') end
 active_draw = function() print('no draw') end
@@ -35,14 +35,15 @@ function love.load()
 	MainMenuState:init()
 	PlayingState:init()
 	PauseMenuState:init()
+
 	Physics:init()
 
-	pause_menu:add_item("restart", "restart", function(k, g) if k == "return" or g == "a" then PlayingState:restart() end end)
-	pause_menu:add_item("levels", "levels", select_level)
-	pause_menu:add_item("controls", "controls", nil)
-	pause_menu:add_item("credits", "credits", nil)
+	-- pause_menu:add_item("restart", "restart", function(k, g) if k == "return" or g == "a" then PlayingState:restart() end end)
+	-- pause_menu:add_item("levels", "levels", select_level)
+	-- pause_menu:add_item("controls", "controls", nil)
+	-- pause_menu:add_item("credits", "credits", nil)
 
-	player = Player:new( Physics.world, 0, 0 )
+	player = Player:new( 0, 0 )
 	
 	level_list = get_level_list()
 
@@ -51,8 +52,8 @@ function love.load()
 	PlayingState:restart()
 	select_level()
 
-	pause_menu.active = true
-	pause_menu.index = 3
+	PauseMenuState.active = true
+	PauseMenuState.index = 3
 end
 
 function love.update( dt )
@@ -69,14 +70,14 @@ end
 
 function love.gamepadpressed(gamepad, button)
 
-	if button == "a" and not pause_menu.active then
+	if button == "a" and not PauseMenuState.active then
 		player:pulse(Physics.world)
 	end
 
-	pause_menu:handle_input(nil, button)
+	-- pause_menu:handle_input(nil, button)
 
 	-- restart by pressing select
-	if button == "back" and not pause_menu.active then
+	if button == "back" and not PauseMenuState.active then
 		PlayingState:restart()
 	end
 
@@ -84,14 +85,14 @@ function love.gamepadpressed(gamepad, button)
 end
 
 function love.keypressed( keycode, scancode, isrepeat )
-	if scancode == "space" and not pause_menu.active then
+	if scancode == "space" and not PauseMenuState.active then
 		player:pulse(Physics.world)
 	end
 
-	pause_menu:handle_input(scancode, nil)
+	-- pause_menu:handle_input(scancode, nil)
 
 	-- Restart with the R key
-	if scancode == "r" and pause_menu.active == false then
+	if scancode == "r" and PauseMenuState.active == false then
 		PlayingState:restart()
 	end
 
@@ -130,6 +131,7 @@ function clear_level()
 	for i = 1, #zombies do
 		zombies[i].body:destroy()
 	end
+	
 	player:respawn()
 end
 
@@ -210,5 +212,5 @@ function select_level( keyboard_pressed, gamepad_pressed )
 	end
 
 	-- indicate which is the 
-	pause_menu.items[2].text = "level: "..GetFileName(level_filepath)
+	PauseMenuState.items[2].text = "level: "..GetFileName(level_filepath)
 end

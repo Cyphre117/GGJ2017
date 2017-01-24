@@ -1,10 +1,42 @@
 PauseMenuState = {
 	active = false,
-	items = {"restart", "level", "controls", "credits"},
+	items = {},
 	current_item = 1
 }
 
+local levels_string =
+[[You can even create your own levels!
+Just add '.png' files to the levels folder
+
+100% RED = lava
+100% GREEN = zombies
+100% BLUE = player
+100% BLACK = walls]]
+
+local controls_string = 
+[[ARROWS: move
+SPACE: sonar
+R: restart
+
+Zombies run towards noise
+Lava kills everything]]
+
+local credits_string =
+[[Concept/Programming: Tom
+@HopeThomasj
+
+Audio: Chris
+linkedin.com/in/christopher-quinn-sound
+
+More levels by Bogdan, Sam A. and Sam C.
+
+And thanks to Dundee Makerspace for the awesome jam site!]]
+
 function PauseMenuState:init()
+	table.insert(self.items, {text="restart", callback = function()print("restart")end})
+	table.insert(self.items, {text="level", callback = function()print("level")end})
+	table.insert(self.items, {text="controls", callback = function()print("controls")end})
+	table.insert(self.items, {text="credits", callback = function()print("credits")end})
 end
 
 function PauseMenuState:update( dt )
@@ -19,49 +51,30 @@ function PauseMenuState:draw()
 	love.graphics.rectangle("fill", 0, 0, screen_width, screen_height)
 
 	-- Draw the pause menu
-	pause_menu:draw()
-
-	if pause_menu.active then
-		if pause_menu:selected_text() == "levels" then
-			love.graphics.print(
-[[You can even create your own levels!
-Just add '.png' files to the levels folder
-
-100% RED = lava
-100% GREEN = zombies
-100% BLUE = player
-100% BLACK = walls]], 20, 300, 0, 2, 2)
-		elseif pause_menu:selected_text() == "controls" then
-			love.graphics.print(
-[[ARROWS: move
-SPACE: sonar
-R: restart
-
-Zombies run towards noise
-Lava kills everything]]
-, 20, 300, 0, 2, 2)
-			if controller.connection then
-				love.graphics.print("Controller: "..controller.name, 20, screen_height - 50, 0, 2, 2)
-			end
-		elseif pause_menu:selected_text() == "credits" then
-			love.graphics.print(
-[[Concept/Programming: Tom
-@HopeThomasj
-
-Audio: Chris
-linkedin.com/in/christopher-quinn-sound
-
-More levels by Bogdan, Sam A. and Sam C.
-
-And thanks to Dundee Makerspace for the awesome jam site!]]
-, 20, 300, 0, 1.5, 1.5)
+	love.graphics.setColor(255, 255, 255, 255)
+	for i = 1, #self.items do
+		local string = self.items[i].text
+		if self.current_item == i then
+			string = "> "..string
 		end
+		love.graphics.print(string, 20, 120 + 30 * i, 0, 2, 2)
+	end
+
+	love.graphics.setColor(255, 255, 255, 255)
+
+	if self.items[self.current_item].text == "levels" then
+		love.graphics.print(levels_string, 20, 300, 0, 2, 2)
+	elseif self.items[self.current_item].text == "controls" then
+		love.graphics.print(controls_string, 20, 300, 0, 2, 2)
+		if controller.connection then
+			love.graphics.print("Controller: "..controller.name, 20, screen_height - 50, 0, 2, 2)
+		end
+	elseif self.items[self.current_item].text == "credits" then
+		love.graphics.print(credits_string, 20, 300, 0, 1.5, 1.5)
 	end
 
 	player:draw_hud()
 	if not player.dead and #zombies == 0 then
-		-- you won the game
-		pause_menu.active = true
 
 		if level_start_time > 0 then
 			level_time_taken = love.timer.getTime() - level_start_time
@@ -77,33 +90,54 @@ end
 function PauseMenuState:joystickpressed( joystick, button )
 	-- FIXME: for now, just assume all joysticks have an Xbox like layout
 	-- On OSX using the XBox360 drivers the controller was not recognized by love as a gamepad
-	-- if joystick:getName() == "Xbox 360 Wired Controller" then
-		if button == 1 and not pause_menu.active then
-			player:pulse(Physics.world)
-		end
-
-		if button == 1 then pause_menu:handle_input(nil, "a") end
-		if button == 9 then pause_menu:handle_input(nil, "start") end
-		if button == 10 then
-			pause_menu:handle_input(nil, "back")
-			if not pause_menu.active then restart() end
-		end
-		if button == 12 then pause_menu:handle_input(nil, "dpup") end
-		if button == 13 then pause_menu:handle_input(nil, "dpdown") end
-		if button == 14 then pause_menu:handle_input(nil, "dpleft") end
-		if button == 15 then pause_menu:handle_input(nil, "dpright") end
-	-- end
+	-- convert joystick to gamepad input
+	if button == 1 then			self:gamepadpressed(nil, "a")
+	elseif button == 9 then		self:gamepadpressed(nil, "start")
+	elseif button == 10	then	self:gamepadpressed(nil, "back")
+	elseif button == 12 then	self:gamepadpressed(nil, "dpup")
+	elseif button == 13 then	self:gamepadpressed(nil, "dpdown")
+	elseif button == 14 then	self:gamepadpressed(nil, "dpleft")
+	elseif button == 15 then	self:gamepadpressed(nil, "dpright")
+	end
 end
 
 function PauseMenuState:keypressed( keycode, scancode, isrepeat )
-	if scancode == "escape" then
-		self:gamepadpressed(nil, "start")
+	-- convert keypresset to the controller equivilent and forward
+	if scancode == "return" or scancode == "space" then		self:gamepadpressed(nil, "a")
+	elseif scancode == "escape" then	self:gamepadpressed(nil, "start")
+	elseif scancode == "r" then			self:gamepadpressed(nil, "back")
+	elseif scancode == "up" then		self:gamepadpressed(nil, "dpup")
+	elseif scancode == "down" then		self:gamepadpressed(nil, "dpdown")
+	elseif scancode == "left" then		self:gamepadpressed(nil, "dpleft")
+	elseif scancode == "right" then		self:gamepadpressed(nil, "dpright")
 	end
 end
 
 function PauseMenuState:gamepadpressed( gamepad, button )
 	if button == "start" then
+
 		current_state = PlayingState
-		print("resume")
+
+	elseif button == "dpup" then
+
+		-- move up the menu, wrap around at top
+		self.current_item = self.current_item - 1
+		if self.current_item < 1 then self.current_item = #self.items end
+
+	elseif button == "dpdown" then
+
+		-- move down, warp to top at the bottom
+		self.current_item = self.current_item + 1
+		if self.current_item > #self.items then self.current_item = 1 end
+
+	elseif button == "a" then
+		if self.items[self.current_item].text == "restart" then
+			PlayingState:restart()
+		end
+	elseif button == "dpright" or button == "dpleft" then
+		select_level(nil, button)
 	end
+end
+
+function PauseMenuState:change_level()
 end

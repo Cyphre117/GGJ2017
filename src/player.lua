@@ -1,3 +1,4 @@
+require "physics"
 require "pulse"
 require "helpers"
 
@@ -22,7 +23,7 @@ Player.prototype = {
 	death_text = ""
 }
 
-function Player:new( world, x, y )
+function Player:new( x, y )
 	
 	-- Create new empty object
 	local o = {}
@@ -38,12 +39,11 @@ function Player:new( world, x, y )
 
 	o.x = x
 	o.y = y
-	o.body = love.physics.newBody( world, x, y, "dynamic" )
+	o.body = love.physics.newBody( Physics.world, x, y, "dynamic" )
 	o.shape = love.physics.newCircleShape( o.size )
 	o.fixture = love.physics.newFixture( o.body, o.shape, 1 )
 	o.fixture:setRestitution(0)
 	o.fixture:setUserData({tag="player"})
-	o.world = world	  							-- the physics world
 
 	-- Set orientation to looking up
 	love.audio.setOrientation(0, 1, 0, 0, 0, 1)
@@ -106,12 +106,12 @@ function Player:setPosition( x, y )
 	self.body:setPosition( x, y )
 end
 
-function Player:update(dt, paused, directions)
+function Player:update(dt, directions)
 
 	local x_vel = 0
 	local y_vel = 0
 
-	if self.dead == false and paused == false then
+	if self.dead == false then
 
 		self.x = self.body:getX()
 		self.y = self.body:getY()
@@ -142,7 +142,7 @@ function Player:update(dt, paused, directions)
 	if self.step_timer > self.step_speed then
 		-- The player stepped
 		self.step_timer = 0
-		table.insert( self.pulse_array, Pulse:new(self.world, self.x, self.y, 0.18, 30, 255, 255, 255) )
+		table.insert( self.pulse_array, Pulse:new(Physics.world, self.x, self.y, 0.18, 30, 255, 255, 255) )
 
 		local footstep_x_offset, footstep_y_offset = 0, 0
 		if x_vel > 0 then footstep_x_offset = 5 elseif x_vel < 0 then footstep_x_offset = -5 end
@@ -175,12 +175,18 @@ function Player:update(dt, paused, directions)
 	-- remove pulses that are dead
 	for i = 1, #self.pulse_array do
 		if self.pulse_array[i] ~= nil and self.pulse_array[i].dead == true then
+			self.pulse_array[i].body:destroy()
 			table.remove( self.pulse_array, i )
 		end
 	end
 end
 
 function Player:respawn()
+	for i = 1, #self.pulse_array do
+		self.pulse_array[i].fixture:destroy()
+		self.pulse_array[i].body:destroy()
+	end
+	self.pulse_array = {}
 	self.dead = false
 end
 
@@ -212,7 +218,7 @@ end
 
 function Player:pulse()
 	if not player.dead then
-		table.insert( self.pulse_array, Pulse:new(self.world, self.x, self.y, 2, 10, 0, 0, 255) )
+		table.insert( self.pulse_array, Pulse:new(Physics.world, self.x, self.y, 2, 10, 0, 0, 255) )
 
 		local id = love.math.random(#self.pulse_sounds)
 		self.pulse_sounds[id]:stop()
