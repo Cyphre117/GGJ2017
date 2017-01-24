@@ -9,7 +9,7 @@ local levels_string =
 Just add '.png' files to the levels folder
 
 100% RED = lava
-100% GREEN = zombies
+100% GREEN = Level.zombies
 100% BLUE = player
 100% BLACK = walls]]
 
@@ -62,19 +62,19 @@ function PauseMenuState:draw()
 
 	love.graphics.setColor(255, 255, 255, 255)
 
-	if self.items[self.current_item].text == "levels" then
+	if self:selected() == "levels" then
 		love.graphics.print(levels_string, 20, 300, 0, 2, 2)
-	elseif self.items[self.current_item].text == "controls" then
+	elseif self:selected() == "controls" then
 		love.graphics.print(controls_string, 20, 300, 0, 2, 2)
 		if controller.connection then
 			love.graphics.print("Controller: "..controller.name, 20, screen_height - 50, 0, 2, 2)
 		end
-	elseif self.items[self.current_item].text == "credits" then
+	elseif self:selected() == "credits" then
 		love.graphics.print(credits_string, 20, 300, 0, 1.5, 1.5)
 	end
 
 	player:draw_hud()
-	if not player.dead and #zombies == 0 then
+	if not player.dead and #Level.zombies == 0 then
 
 		if level_start_time > 0 then
 			level_time_taken = love.timer.getTime() - level_start_time
@@ -85,6 +85,10 @@ function PauseMenuState:draw()
 		love.graphics.print("YOU KILLED EVERYTHING", 20, 20, 0, 4, 4)
 		love.graphics.print("Time: "..string.format("%.2f", level_time_taken), 20, 80, 0, 2, 2)
 	end
+end
+
+function PauseMenuState:selected()
+	return self.items[self.current_item].text
 end
 
 function PauseMenuState:joystickpressed( joystick, button )
@@ -131,10 +135,10 @@ function PauseMenuState:gamepadpressed( gamepad, button )
 		if self.current_item > #self.items then self.current_item = 1 end
 
 	elseif button == "a" then
-		if self.items[self.current_item].text == "restart" then
+		if self:selected() == "restart" then
 			PlayingState:restart()
 		end
-	elseif button == "dpright" or button == "dpleft" then
+	elseif self.current_item == 2 and (button == "dpright" or button == "dpleft") then
 		select_level(nil, button)
 	end
 end

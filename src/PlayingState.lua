@@ -15,11 +15,11 @@ function PlayingState:update(dt)
 	Physics:update(dt)
 
 	-- Zombies
-	for i=1, #zombies do
-		if zombies[i] ~= nil then
-			zombies[i]:update(dt)
-			if zombies[i].dead then
-				table.remove( zombies, i )
+	for i=1, #Level.zombies do
+		if Level.zombies[i] ~= nil then
+			Level.zombies[i]:update(dt)
+			if Level.zombies[i].dead then
+				table.remove( Level.zombies, i )
 			end
 		end
 	end
@@ -39,8 +39,8 @@ function PlayingState:draw()
 		love.graphics.setBackgroundColor( 0, 0, 0 )
 	end
 	--- Lava first
-	for i=1, #lavas do
-		lavas[i]:draw()
+	for i=1, #Level.lavas do
+		Level.lavas[i]:draw()
 	end
 
 	--- Pulses
@@ -49,8 +49,8 @@ function PlayingState:draw()
 
 	--- Walls
 	love.graphics.setColor( 0, 0, 0 )
-	for i=1, #walls do
-		drawPhysicsBox( walls[i] )
+	for i=1, #Level.walls do
+		drawPhysicsBox( Level.walls[i] )
 	end
 
 	--- Outer boundaries
@@ -61,14 +61,14 @@ function PlayingState:draw()
 	love.graphics.rectangle("fill", bounds.minx, bounds.maxy, (bounds.maxx - bounds.minx), 1000)
 
 	--- Zombies
-	for i=1, #zombies do
+	for i=1, #Level.zombies do
 		love.graphics.setLineWidth(2)
-		zombies[i]:draw_pulses()
+		Level.zombies[i]:draw_pulses()
 	end
 
-	for i=1, #zombies do
+	for i=1, #Level.zombies do
 		love.graphics.setColor(0, 0, 0, 255)
-		zombies[i]:draw()
+		Level.zombies[i]:draw()
 	end
 
 	--- Player
@@ -78,14 +78,14 @@ function PlayingState:draw()
 	camera:unset()
 
 	-- Now render the HUD
-	if player.dead  or #zombies == 0 then
+	if player.dead  or #Level.zombies == 0 then
 		current_state = PauseMenuState
 	end
 end
 
 function PlayingState:restart()
 	clear_level()
-	walls, lavas, zombies, bounds, level_start_time = createLevelFromImage(level_filepath)
+	 bounds, level_start_time = Level:load(level_filepath)
 	loaded_level = level_filepath
 	current_state = PlayingState
 end

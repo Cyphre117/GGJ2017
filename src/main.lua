@@ -9,9 +9,9 @@
 
 screen_width, screen_height = love.graphics.getDimensions()
 
-walls = {}
-lavas = {}
-zombies = {}
+-- walls = {}
+-- lavas = {}
+-- zombies = {}
 bounds = {}
 draw_world = false
 level_start_time = 0
@@ -122,16 +122,19 @@ function love.resize( w, h )
 end
 
 function clear_level()
-	for i = 1, #walls do
-		walls[i].body:destroy()
+	for i = 1, #Level.walls do
+		Level.walls[i].body:destroy()
 	end
-	for i = 1, #lavas do
-		lavas[i].body:destroy()
+	Level.walls = {}
+	for i = 1, #Level.lavas do
+		Level.lavas[i].body:destroy()
 	end
-	for i = 1, #zombies do
-		zombies[i].body:destroy()
+	Level.lavas = {}
+	for i = 1, #Level.zombies do
+		Level.zombies[i].body:destroy()
 	end
-	
+	Level.zombies = {}
+
 	player:respawn()
 end
 
