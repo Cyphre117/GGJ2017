@@ -5,7 +5,13 @@ Level = {
 	walls = {},
 	lavas = {},
 	zombies = {},
+	file_list = {},
+	lights_on = false
 }
+
+function Level:init()
+	self:update_file_list()
+end
 
 function Level:load(path)
 	local scale = 50
@@ -78,15 +84,13 @@ function Level:clear()
 	player:respawn()
 end
 
-function Level:list()
+function Level:update_file_list()
 	local items = love.filesystem.getDirectoryItems("levels/")
-	local png_files = {}
+	self.file_list = {}
 
 	for i = 1, #items do
 		if GetFileExtension(items[i]) == ".png" then
-			table.insert( png_files, items[i] )
+			table.insert( self.file_list, items[i] )
 		end
 	end
-
-	return png_files
 end

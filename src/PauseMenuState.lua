@@ -1,7 +1,7 @@
 PauseMenuState = {
 	active = false,
-	items = {},
-	current_item = 1
+	items = {"restart", "select level", "Quit to Main Menu"},
+	index = 1
 }
 
 local levels_string =
@@ -33,10 +33,10 @@ More levels by Bogdan, Sam A. and Sam C.
 And thanks to Dundee Makerspace for the awesome jam site!]]
 
 function PauseMenuState:init()
-	table.insert(self.items, {text="restart", callback = function()print("restart")end})
-	table.insert(self.items, {text="level", callback = function()print("level")end})
-	table.insert(self.items, {text="controls", callback = function()print("controls")end})
-	table.insert(self.items, {text="credits", callback = function()print("credits")end})
+	-- table.insert(self.items, {text="restart", callback = function()print("restart")end})
+	-- table.insert(self.items, {text="level", callback = function()print("level")end})
+	-- table.insert(self.items, {text="controls", callback = function()print("controls")end})
+	-- table.insert(self.items, {text="credits", callback = function()print("credits")end})
 end
 
 function PauseMenuState:update( dt )
@@ -53,16 +53,20 @@ function PauseMenuState:draw()
 	-- Draw the pause menu
 	love.graphics.setColor(255, 255, 255, 255)
 	for i = 1, #self.items do
-		local string = self.items[i].text
-		if self.current_item == i then
-			string = "> "..string
+		local string = self.items[i]
+		if self.index == i then
+			if string == "select level" then
+				string = "> load: "..Level.file_list[level_index]
+			else
+				string = "> "..string
+			end
 		end
 		love.graphics.print(string, 20, 120 + 30 * i, 0, 2, 2)
 	end
 
 	love.graphics.setColor(255, 255, 255, 255)
 
-	if self:selected() == "levels" then
+	if self:selected() == "level" then
 		love.graphics.print(levels_string, 20, 300, 0, 2, 2)
 	elseif self:selected() == "controls" then
 		love.graphics.print(controls_string, 20, 300, 0, 2, 2)
@@ -88,7 +92,19 @@ function PauseMenuState:draw()
 end
 
 function PauseMenuState:selected()
-	return self.items[self.current_item].text
+	return self.items[self.index]
+end
+
+function PauseMenuState:restart()
+	PlayingState:restart()
+end
+
+PauseMenuState["select level"] = function(self, button)
+	PlayingState:restart()
+end
+
+PauseMenuState["Quit to Main Menu"] = function(self)
+	current_state = MainMenuState
 end
 
 function PauseMenuState:joystickpressed( joystick, button )
@@ -118,27 +134,51 @@ function PauseMenuState:keypressed( keycode, scancode, isrepeat )
 end
 
 function PauseMenuState:gamepadpressed( gamepad, button )
-	if button == "start" then
-
+	if button == "a" then
+		-- Call the selected item
+		self[self.items[self.index]](self, button)
+	elseif button == "start" then
+		-- Resume playing
 		current_state = PlayingState
-
+	elseif button == "back" then
 	elseif button == "dpup" then
-
-		-- move up the menu, wrap around at top
-		self.current_item = self.current_item - 1
-		if self.current_item < 1 then self.current_item = #self.items end
-
+		-- move up the list
+		self.index = self.index - 1
+		if self.index < 1 then self.index = #self.items end
 	elseif button == "dpdown" then
+		-- move down the list
+		self.index = self.index + 1
+		if self.index > #self.items then self.index = 1 end
+	elseif button == "dpleft" then
+	elseif button == "dpright" then
+	end
 
-		-- move down, warp to top at the bottom
-		self.current_item = self.current_item + 1
-		if self.current_item > #self.items then self.current_item = 1 end
 
-	elseif button == "a" then
-		if self:selected() == "restart" then
-			PlayingState:restart()
-		end
-	elseif self.current_item == 2 and (button == "dpright" or button == "dpleft") then
+
+	-- if button == "start" then
+
+	-- 	current_state = PlayingState
+
+	-- elseif button == "dpup" then
+
+	-- 	-- move up the menu, wrap around at top
+	-- 	self.current_item = self.current_item - 1
+	-- 	if self.current_item < 1 then self.current_item = #self.items end
+
+	-- elseif button == "dpdown" then
+
+	-- 	-- move down, warp to top at the bottom
+	-- 	self.current_item = self.current_item + 1
+	-- 	if self.current_item > #self.items then self.current_item = 1 end
+
+	-- elseif button == "a" then
+
+	-- 	self[self.items[self.current_item]](self)
+
+	-- 	-- if self:selected() == "restart" then
+	-- 	-- 	PlayingState:restart()
+	-- 	-- end
+	if self.index == 2 and (button == "dpright" or button == "dpleft") then
 		select_level(nil, button)
 	end
 end

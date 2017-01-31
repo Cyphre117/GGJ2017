@@ -33,7 +33,7 @@ function PlayingState:draw()
 
 	-- Draw everything back to front
 	--- Background
-	if draw_world then
+	if Level.lights_on then
 		love.graphics.setBackgroundColor( 150, 150, 150 )
 	else
 		love.graphics.setBackgroundColor( 0, 0, 0 )
@@ -111,6 +111,7 @@ function PlayingState:gamepadpressed( gamepad, button )
 	elseif button == "start" then
 		current_state = PauseMenuState
 	elseif button == "back" then
+		PlayingState:restart()
 	elseif button == "dpup" then
 	elseif button == "dpdown" then
 	elseif button == "dpleft" then

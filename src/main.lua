@@ -2,7 +2,6 @@
  require "camera"
  require "lava"
  require "zombie"
- require "menu"
  require "MainMenuState"
  require "PauseMenuState"
  require "PlayingState"
@@ -10,20 +9,15 @@
 screen_width, screen_height = love.graphics.getDimensions()
 
 bounds = {}
-draw_world = false
 level_start_time = 0
 level_time_taken = 0
 level_filepath = ""				-- path to the image data for the level
-level_list = {}					-- array of all .png images in the image folder
 level_index = 1					-- index of the currently selected level
 loaded_level = level_filepath		-- name of the last level that was loaded
 controller = {connection=nil, type="none", name=""}
 directions = {x_axis = 0, y_axis = 0}
 
-active_update = function() print('no update') end
-active_draw = function() print('no draw') end
-
-current_state = PauseMenuState
+current_state = nil
 
 function love.load()
 	love.math.setRandomSeed(love.timer.getTime())
@@ -32,18 +26,19 @@ function love.load()
 	PlayingState:init()
 	PauseMenuState:init()
 
+	Level:init()
 	Physics:init()
 
 	player = Player:new( 0, 0 )
-	
-	level_list = Level:list()
 
-	level_filepath = "levels/"..level_list[level_index]
+	level_filepath = "levels/"..Level.file_list[level_index]
 
 	PlayingState:restart()
 	select_level()
 
 	PauseMenuState.index = 3
+
+	current_state = MainMenuState
 end
 
 function love.update( dt )
@@ -60,16 +55,14 @@ end
 
 function love.gamepadpressed(gamepad, button)
 
-	if button == "a" and not PauseMenuState.active then
-		player:pulse(Physics.world)
-	end
-
-	-- pause_menu:handle_input(nil, button)
+	-- if button == "a" and not PauseMenuState.active then
+	-- 	player:pulse(Physics.world)
+	-- end
 
 	-- restart by pressing select
-	if button == "back" and not PauseMenuState.active then
-		PlayingState:restart()
-	end
+	-- if button == "back" and not PauseMenuState.active then
+	-- 	PlayingState:restart()
+	-- end
 
 	current_state:gamepadpressed(gamepad, button)
 end
@@ -78,8 +71,6 @@ function love.keypressed( keycode, scancode, isrepeat )
 	if scancode == "space" and not PauseMenuState.active then
 		player:pulse(Physics.world)
 	end
-
-	-- pause_menu:handle_input(scancode, nil)
 
 	-- Restart with the R key
 	if scancode == "r" and PauseMenuState.active == false then
@@ -150,22 +141,22 @@ function update_input()
 end
 
 function select_level( keyboard_pressed, gamepad_pressed )
-	-- update the level list each time
-	level_list = Level:list()
+
+	Level:update_file_list()
 
 	if keyboard_pressed == "right" or gamepad_pressed == "dpright" then
 
 		-- change selected level
 		level_index = level_index + 1
-		if level_index > #level_list then level_index = 1 end
-		level_filepath = "levels/"..level_list[level_index]
+		if level_index > #Level.file_list then level_index = 1 end
+		level_filepath = "levels/"..Level.file_list[level_index]
 
 	elseif keyboard_pressed == "left" or gamepad_pressed == "dpleft" then
 
 		-- change selected level
 		level_index = level_index - 1
-		if level_index < 1 then level_index = #level_list end
-		level_filepath = "levels/"..level_list[level_index]
+		if level_index < 1 then level_index = #Level.file_list end
+		level_filepath = "levels/"..Level.file_list[level_index]
 
 
 	elseif keyboard_pressed == "return" or gamepad_pressed == "a" then
@@ -175,5 +166,5 @@ function select_level( keyboard_pressed, gamepad_pressed )
 	end
 
 	-- indicate which is the 
-	PauseMenuState.items[2].text = "level: "..GetFileName(level_filepath)
+	--PauseMenuState.items[2].text = "level: "..GetFileName(level_filepath)
 end
